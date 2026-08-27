@@ -1,0 +1,147 @@
+[
+  {
+    "train_no": "12301",
+    "train_name": "Howrah Rajdhani Express (via Gaya)",
+    "type": "Rajdhani Express",
+    "priority": 1,
+    "direction": "DOWN",
+    "source": "NDLS",
+    "destination": "HWH",
+    "stops": [
+      { "station_code": "NDLS", "sched_arrival": "16:50", "sched_departure": "16:55", "dwell_min": 5, "distance_km": 0.0 },
+      { "station_code": "CNB", "sched_arrival": "21:30", "sched_departure": "21:35", "dwell_min": 5, "distance_km": 440.0 },
+      { "station_code": "PRYJ", "sched_arrival": "23:05", "sched_departure": "23:10", "dwell_min": 5, "distance_km": 634.5 },
+      { "station_code": "DDU", "sched_arrival": "00:45", "sched_departure": "00:55", "dwell_min": 10, "distance_km": 787.2 },
+      { "station_code": "ASN", "sched_arrival": "06:15", "sched_departure": "06:20", "dwell_min": 5, "distance_km": 1331.0 },
+      { "station_code": "HWH", "sched_arrival": "09:55", "sched_departure": "09:55", "dwell_min": 0, "distance_km": 1532.0 }
+    ]
+  },
+  {
+    "train_no": "12302",
+    "train_name": "New Delhi Rajdhani Express",
+    "type": "Rajdhani Express",
+    "priority": 1,
+    "direction": "UP",
+    "source": "HWH",
+    "destination": "NDLS",
+    "stops": [
+      { "station_code": "HWH", "sched_arrival": "16:50", "sched_departure": "16:55", "dwell_min": 5, "distance_km": 0.0 },
+      { "station_code": "ASN", "sched_arrival": "19:20", "sched_departure": "19:23", "dwell_min": 3, "distance_km": 201.0 },
+      { "station_code": "DDU", "sched_arrival": "01:45", "sched_departure": "01:55", "dwell_min": 10, "distance_km": 744.8 },
+      { "station_code": "PRYJ", "sched_arrival": "03:35", "sched_departure": "03:40", "dwell_min": 5, "distance_km": 897.5 },
+      { "station_code": "CNB", "sched_arrival": "05:20", "sched_departure": "05:25", "dwell_min": 5, "distance_km": 1092.0 },
+      { "station_code": "NDLS", "sched_arrival": "10:00", "sched_departure": "10:00", "dwell_min": 0, "distance_km": 1532.0 }
+    ]
+  },
+  {
+    "train_no": "22436",
+    "train_name": "Vande Bharat Express (NDLS-BSB/DDU)",
+    "type": "Vande Bharat Express",
+    "priority": 1,
+    "direction": "DOWN",
+    "source": "NDLS",
+    "destination": "DDU",
+    "stops": [
+      { "station_code": "NDLS", "sched_arrival": "06:00", "sched_departure": "06:00", "dwell_min": 0, "distance_km": 0.0 },
+      { "station_code": "CNB", "sched_arrival": "10:08", "sched_departure": "10:10", "dwell_min": 2, "distance_km": 440.0 },
+      { "station_code": "PRYJ", "sched_arrival": "12:08", "sched_departure": "12:10", "dwell_min": 2, "distance_km": 634.5 },
+      { "station_code": "DDU", "sched_arrival": "14:00", "sched_departure": "14:00", "dwell_min": 0, "distance_km": 787.2 }
+    ]
+  },
+  {
+    "train_no": "12382",
+    "train_name": "Poorva Express (via Patna)",
+    "type": "Superfast Express",
+    "priority": 2,
+    "direction": "DOWN",
+    "source": "NDLS",
+    "destination": "HWH",
+    "stops": [
+      { "station_code": "NDLS", "sched_arrival": "17:40", "sched_departure": "17:40", "dwell_min": 0, "distance_km": 0.0 },
+      { "station_code": "ALJN", "sched_arrival": "19:13", "sched_departure": "19:15", "dwell_min": 2, "distance_km": 131.2 },
+      { "station_code": "TDL", "sched_arrival": "20:13", "sched_departure": "20:15", "dwell_min": 2, "distance_km": 209.0 },
+      { "station_code": "ETW", "sched_arrival": "21:08", "sched_departure": "21:10", "dwell_min": 2, "distance_km": 300.7 },
+      { "station_code": "CNB", "sched_arrival": "22:55", "sched_departure": "23:05", "dwell_min": 10, "distance_km": 440.0 },
+      { "station_code": "FTP", "sched_arrival": "00:02", "sched_departure": "00:04", "dwell_min": 2, "distance_km": 517.8 },
+      { "station_code": "PRYJ", "sched_arrival": "01:45", "sched_departure": "01:50", "dwell_min": 5, "distance_km": 634.5 },
+      { "station_code": "DDU", "sched_arrival": "05:10", "sched_departure": "05:20", "dwell_min": 10, "distance_km": 787.2 },
+      { "station_code": "BXR", "sched_arrival": "06:33", "sched_departure": "06:35", "dwell_min": 2, "distance_km": 881.0 },
+      { "station_code": "ARA", "sched_arrival": "07:22", "sched_departure": "07:24", "dwell_min": 2, "distance_km": 949.4 },
+      { "station_code": "PNBE", "sched_arrival": "08:45", "sched_departure": "08:55", "dwell_min": 10, "distance_km": 998.7 },
+      { "station_code": "KIUL", "sched_arrival": "11:20", "sched_departure": "11:22", "dwell_min": 2, "distance_km": 1122.3 },
+      { "station_code": "JSME", "sched_arrival": "13:02", "sched_departure": "13:04", "dwell_min": 2, "distance_km": 1220.5 },
+      { "station_code": "ASN", "sched_arrival": "14:48", "sched_departure": "14:53", "dwell_min": 5, "distance_km": 1331.0 },
+      { "station_code": "DGR", "sched_arrival": "15:25", "sched_departure": "15:27", "dwell_min": 2, "distance_km": 1373.2 },
+      { "station_code": "BWN", "sched_arrival": "16:21", "sched_departure": "16:23", "dwell_min": 2, "distance_km": 1437.5 },
+      { "station_code": "HWH", "sched_arrival": "17:35", "sched_departure": "17:35", "dwell_min": 0, "distance_km": 1532.0 }
+    ]
+  },
+  {
+    "train_no": "12398",
+    "train_name": "Mahabodhi SF Express",
+    "type": "Superfast Express",
+    "priority": 2,
+    "direction": "DOWN",
+    "source": "NDLS",
+    "destination": "DDU",
+    "stops": [
+      { "station_code": "NDLS", "sched_arrival": "12:50", "sched_departure": "12:50", "dwell_min": 0, "distance_km": 0.0 },
+      { "station_code": "ALJN", "sched_arrival": "14:30", "sched_departure": "14:32", "dwell_min": 2, "distance_km": 131.2 },
+      { "station_code": "CNB", "sched_arrival": "17:55", "sched_departure": "18:00", "dwell_min": 5, "distance_km": 440.0 },
+      { "station_code": "PRYJ", "sched_arrival": "19:30", "sched_departure": "19:35", "dwell_min": 5, "distance_km": 634.5 },
+      { "station_code": "DDU", "sched_arrival": "22:10", "sched_departure": "22:20", "dwell_min": 10, "distance_km": 787.2 }
+    ]
+  },
+  {
+    "train_no": "12876",
+    "train_name": "Neelachal SF Express",
+    "type": "Superfast Express",
+    "priority": 3,
+    "direction": "DOWN",
+    "source": "NDLS",
+    "destination": "DDU",
+    "stops": [
+      { "station_code": "NDLS", "sched_arrival": "07:30", "sched_departure": "07:30", "dwell_min": 0, "distance_km": 0.0 },
+      { "station_code": "GZB", "sched_arrival": "08:16", "sched_departure": "08:18", "dwell_min": 2, "distance_km": 25.4 },
+      { "station_code": "ALJN", "sched_arrival": "09:38", "sched_departure": "09:40", "dwell_min": 2, "distance_km": 131.2 },
+      { "station_code": "TDL", "sched_arrival": "10:40", "sched_departure": "10:42", "dwell_min": 2, "distance_km": 209.0 },
+      { "station_code": "ETW", "sched_arrival": "11:38", "sched_departure": "11:40", "dwell_min": 2, "distance_km": 300.7 },
+      { "station_code": "CNB", "sched_arrival": "13:30", "sched_departure": "13:35", "dwell_min": 5, "distance_km": 440.0 },
+      { "station_code": "FTP", "sched_arrival": "14:40", "sched_departure": "14:42", "dwell_min": 2, "distance_km": 517.8 },
+      { "station_code": "PRYJ", "sched_arrival": "16:25", "sched_departure": "16:30", "dwell_min": 5, "distance_km": 634.5 },
+      { "station_code": "DDU", "sched_arrival": "19:20", "sched_departure": "19:30", "dwell_min": 10, "distance_km": 787.2 }
+    ]
+  },
+  {
+    "train_no": "12566",
+    "train_name": "Bihar Sampark Kranti Express",
+    "type": "Superfast Express",
+    "priority": 2,
+    "direction": "DOWN",
+    "source": "NDLS",
+    "destination": "PNBE",
+    "stops": [
+      { "station_code": "NDLS", "sched_arrival": "13:00", "sched_departure": "13:00", "dwell_min": 0, "distance_km": 0.0 },
+      { "station_code": "CNB", "sched_arrival": "18:10", "sched_departure": "18:15", "dwell_min": 5, "distance_km": 440.0 },
+      { "station_code": "PRYJ", "sched_arrival": "20:00", "sched_departure": "20:05", "dwell_min": 5, "distance_km": 634.5 },
+      { "station_code": "DDU", "sched_arrival": "22:45", "sched_departure": "22:55", "dwell_min": 10, "distance_km": 787.2 },
+      { "station_code": "BXR", "sched_arrival": "00:15", "sched_departure": "00:17", "dwell_min": 2, "distance_km": 881.0 },
+      { "station_code": "PNBE", "sched_arrival": "02:30", "sched_departure": "02:30", "dwell_min": 0, "distance_km": 998.7 }
+    ]
+  },
+  {
+    "train_no": "BOXN_904",
+    "train_name": "Heavy Haul Coal Rake (Freight)",
+    "type": "Freight / Goods",
+    "priority": 5,
+    "direction": "DOWN",
+    "source": "CNB",
+    "destination": "DDU",
+    "stops": [
+      { "station_code": "CNB", "sched_arrival": "11:00", "sched_departure": "11:15", "dwell_min": 15, "distance_km": 440.0 },
+      { "station_code": "FTP", "sched_arrival": "12:50", "sched_departure": "13:20", "dwell_min": 30, "distance_km": 517.8 },
+      { "station_code": "PRYJ", "sched_arrival": "15:40", "sched_departure": "16:10", "dwell_min": 30, "distance_km": 634.5 },
+      { "station_code": "DDU", "sched_arrival": "19:00", "sched_departure": "19:00", "dwell_min": 0, "distance_km": 787.2 }
+    ]
+  }
+]
