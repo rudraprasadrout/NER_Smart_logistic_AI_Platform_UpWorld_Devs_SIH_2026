@@ -1,0 +1,497 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="dark">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="description" content="RailPulse — Live train ETA tracking for Indian Railways using Graph Neural Networks. Real-time delays, platform arrivals, and last-mile cab dispatch.">
+  <title>RailPulse — Live Train ETA | Indian Railways</title>
+  <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🚆</text></svg>">
+  <link rel="stylesheet" href="/static/css/style.css">
+  <script src="https://unpkg.com/lucide@latest"></script>
+</head>
+<body>
+
+  <!-- ==================== NAVBAR ==================== -->
+  <header class="rp-navbar">
+    <div class="navbar-brand">
+      <div class="navbar-logo"><i data-lucide="train-front"></i></div>
+      <div>
+        <div class="row" style="gap:6px;">
+          <span class="navbar-title font-display">RailPulse</span>
+          <span class="badge badge-ir">Indian Railways • SIH 2026</span>
+        </div>
+        <p class="navbar-subtitle" data-i18n="app_subtitle">Dynamic ETA & Decision Support Platform</p>
+      </div>
+    </div>
+
+    <div class="navbar-controls">
+      <!-- Role Toggle -->
+      <div class="role-switcher">
+        <button id="btn-role-passenger" onclick="setRole('passenger')" class="role-btn active-passenger">
+          <i data-lucide="user" style="width:14px;height:14px;"></i>
+          <span data-i18n="passenger_view">Passenger</span>
+        </button>
+        <button id="btn-role-admin" onclick="setRole('admin')" class="role-btn">
+          <i data-lucide="shield" style="width:14px;height:14px;"></i>
+          <span data-i18n="admin_view">Control Room</span>
+        </button>
+      </div>
+
+      <!-- Language -->
+      <div class="ctrl-group">
+        <i data-lucide="globe"></i>
+        <select id="lang-select" onchange="setLanguage(this.value)" class="ctrl-select">
+          <option value="en">EN</option>
+          <option value="hi">हिन्दी</option>
+          <option value="bn">বাংলা</option>
+          <option value="mr">मराठी</option>
+          <option value="ta">தமிழ்</option>
+          <option value="te">తెలుగు</option>
+        </select>
+      </div>
+
+      <!-- Theme -->
+      <button onclick="toggleTheme()" class="theme-btn" title="Toggle theme">
+        <i id="theme-toggle-icon" data-lucide="sun"></i>
+        <span id="theme-toggle-text">Light</span>
+      </button>
+
+      <!-- Sim Clock -->
+      <div class="sim-clock">
+        <span class="pulse-dot"></span>
+        <span data-i18n="telemetry_label" style="color:var(--text-muted);">Live:</span>
+        <span id="sim-clock" class="font-mono" style="font-weight:700;">0m 0s</span>
+      </div>
+    </div>
+  </header>
+
+  <!-- ==================== MAIN CONTENT ==================== -->
+  <main style="max-width:1280px; margin:0 auto; padding:20px;">
+
+    <!-- ====== PASSENGER VIEW ====== -->
+    <section id="passenger-view">
+
+      <!-- Hero Banner -->
+      <div class="hero-banner">
+        <img src="/static/images/train_hero.jpg" alt="Indian Railway Corridor">
+        <div class="hero-banner-overlay">
+          <span class="badge badge-blue" style="width:fit-content; margin-bottom:4px;">Network-Aware ETA</span>
+          <h1 data-i18n="hero_title" class="font-display" style="font-size:1.4rem; font-weight:800; color:#fff;">Live Train Tracking & Multimodal Companion</h1>
+          <p data-i18n="hero_desc" style="font-size:0.8rem; color:#b0bac9; max-width:520px; margin-top:3px;">
+            Dynamic ETA calibrated via Graph Neural Networks and Conformal Confidence bands.
+          </p>
+        </div>
+      </div>
+
+      <!-- Train Chips -->
+      <div style="margin-bottom:14px;">
+        <div data-i18n="active_trains_title" class="stat-label" style="margin-bottom:6px;">Active Corridor Trains</div>
+        <div id="train-chips-container" class="row-wrap" style="overflow-x:auto;">
+          <!-- JS rendered -->
+        </div>
+      </div>
+
+      <!-- Two Column Grid -->
+      <div class="grid-2">
+
+        <!-- LEFT COLUMN -->
+        <div class="stack">
+
+          <!-- Train Status Card -->
+          <div class="rp-card card-pad">
+            <div class="row-between" style="flex-wrap:wrap; gap:10px;">
+              <div>
+                <div class="row" style="gap:8px;">
+                  <span id="hero-train-no" class="font-mono" style="font-size:1.4rem; font-weight:800; color:var(--brand-primary-light);">12301</span>
+                  <h2 id="hero-train-name" class="font-display" style="font-size:1.1rem; font-weight:700;">Howrah Rajdhani Express</h2>
+                </div>
+                <div id="hero-train-route" style="font-size:0.78rem; color:var(--text-secondary); margin-top:3px;">
+                  NDLS → HWH • Express
+                </div>
+              </div>
+              <span id="hero-status-badge" class="badge badge-green">On Time</span>
+            </div>
+
+            <!-- Stats Row -->
+            <div style="display:grid; grid-template-columns:repeat(3,1fr); gap:10px; margin-top:14px; padding-top:14px; border-top:1px solid var(--border-color);">
+              <div>
+                <div class="stat-label" data-i18n="current_speed">Speed</div>
+                <div class="stat-value font-mono" style="color:var(--brand-primary-light);"><span id="hero-speed">125</span> <span style="font-size:0.7rem; color:var(--text-muted);">km/h</span></div>
+              </div>
+              <div>
+                <div class="stat-label" data-i18n="current_track">Section</div>
+                <div id="hero-section" class="font-mono" style="font-size:0.85rem; font-weight:600; margin-top:4px;">TDL–CNB</div>
+              </div>
+              <div>
+                <div class="stat-label" data-i18n="corridor_pos">Distance</div>
+                <div class="stat-value font-mono"><span id="hero-distance">280</span> <span style="font-size:0.7rem; color:var(--text-muted);">km</span></div>
+              </div>
+            </div>
+
+            <!-- Next Station Spotlight -->
+            <div class="spotlight-box">
+              <div>
+                <div class="stat-label" data-i18n="approaching_station">Next Station</div>
+                <div id="spotlight-station-name" style="font-size:1rem; font-weight:700; margin-top:2px;">Kanpur Central (CNB)</div>
+                <div id="spotlight-station-meta" style="font-size:0.72rem; color:var(--text-secondary);">160 km away • Sched: 21:30</div>
+              </div>
+              <div style="text-align:right;">
+                <div class="stat-label" data-i18n="expected_eta">Dynamic ETA</div>
+                <div id="spotlight-eta" class="font-mono" style="font-size:1.3rem; font-weight:800; color:var(--status-green);">21:38</div>
+                <div id="spotlight-window" class="badge badge-blue" style="font-size:0.62rem; margin-top:2px;">21:35 – 21:42</div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Vertical Timeline -->
+          <div class="rp-card card-pad">
+            <div class="row-between" style="margin-bottom:14px;">
+              <h3 data-i18n="timeline_title" class="font-display" style="font-size:0.95rem; font-weight:700;">Station Timeline</h3>
+              <span data-i18n="calibrated_bounds" style="font-size:0.68rem; color:var(--text-muted);">Conformal Bounds</span>
+            </div>
+            <div id="vertical-timeline" class="journey-timeline">
+              <!-- JS rendered -->
+            </div>
+          </div>
+        </div>
+
+        <!-- RIGHT COLUMN -->
+        <div class="stack">
+
+          <!-- Explainability Card -->
+          <div class="rp-card card-pad">
+            <div class="row" style="gap:8px; margin-bottom:10px;">
+              <div style="background:var(--bg-card-active); padding:5px; border-radius:6px;">
+                <i data-lucide="info" style="color:var(--brand-primary-light); width:16px; height:16px;"></i>
+              </div>
+              <div>
+                <h4 data-i18n="why_eta" class="font-display" style="font-size:0.95rem; font-weight:700;">Why this ETA?</h4>
+                <span data-i18n="xai_desc" style="font-size:0.68rem; color:var(--text-muted);">GNN Delay Factor Attribution</span>
+              </div>
+            </div>
+
+            <div style="background:var(--bg-input); padding:10px 12px; border-radius:var(--radius-sm); border:1px solid var(--border-subtle); margin-bottom:14px;">
+              <p id="explain-summary" style="font-size:0.82rem; line-height:1.55; color:var(--text-secondary);">
+                Train running smoothly with optimal signal headways.
+              </p>
+            </div>
+
+            <!-- Factor Bars -->
+            <div class="stack" style="gap:8px;">
+              <div>
+                <div class="row-between" style="font-size:0.72rem; color:var(--text-secondary); margin-bottom:3px;">
+                  <span data-i18n="factor_headway">Headway Contention:</span>
+                  <strong id="pct-headway" class="font-mono" style="color:var(--status-amber);">50%</strong>
+                </div>
+                <div class="progress-track"><div id="bar-headway" class="progress-fill" style="width:50%; background:var(--status-amber);"></div></div>
+              </div>
+              <div>
+                <div class="row-between" style="font-size:0.72rem; color:var(--text-secondary); margin-bottom:3px;">
+                  <span data-i18n="factor_tsr">Speed Restrictions (TSR):</span>
+                  <strong id="pct-tsr" class="font-mono" style="color:var(--brand-primary-light);">25%</strong>
+                </div>
+                <div class="progress-track"><div id="bar-tsr" class="progress-fill" style="width:25%; background:var(--brand-primary-light);"></div></div>
+              </div>
+              <div>
+                <div class="row-between" style="font-size:0.72rem; color:var(--text-secondary); margin-bottom:3px;">
+                  <span data-i18n="factor_dwell">Platform Queuing:</span>
+                  <strong id="pct-dwell" class="font-mono" style="color:#a78bfa;">15%</strong>
+                </div>
+                <div class="progress-track"><div id="bar-dwell" class="progress-fill" style="width:15%; background:#a78bfa;"></div></div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Last-Mile Dispatch Card -->
+          <div class="rp-card card-pad">
+            <div class="row" style="gap:8px; margin-bottom:8px;">
+              <div style="background:var(--status-green-bg); padding:5px; border-radius:6px;">
+                <i data-lucide="car" style="color:var(--status-green); width:16px; height:16px;"></i>
+              </div>
+              <div>
+                <h4 data-i18n="multimodal_title" class="font-display" style="font-size:0.95rem; font-weight:700;">Last-Mile Auto Dispatch</h4>
+                <span style="font-size:0.68rem; color:var(--text-muted);">Cab or SMS when ETA confirmed</span>
+              </div>
+            </div>
+            <p data-i18n="multimodal_desc" style="font-size:0.78rem; color:var(--text-secondary); line-height:1.5; margin-bottom:12px;">
+              When arrival confidence tightens to ±5 min, your cab dispatches automatically.
+            </p>
+            <button onclick="openFeederModal()" class="btn btn-primary" style="width:100%; justify-content:center;">
+              <i data-lucide="bell" style="width:14px; height:14px;"></i>
+              <span data-i18n="enable_dispatch">Enable Auto Dispatch</span>
+            </button>
+          </div>
+
+          <!-- Station Board -->
+          <div class="rp-card card-pad">
+            <div class="row-between" style="margin-bottom:10px;">
+              <h4 data-i18n="station_board_title" class="font-display" style="font-size:0.95rem; font-weight:700;">Station Board</h4>
+              <select class="station-select-dropdown ctrl-select" onchange="selectStation(this.value)" style="border:1px solid var(--border-color); border-radius:var(--radius-sm); padding:4px 8px;">
+                <!-- JS rendered -->
+              </select>
+            </div>
+            <div style="font-size:0.72rem; color:var(--text-secondary); margin-bottom:8px;">
+              <strong id="station-board-name">Kanpur Central</strong> • <span id="station-board-meta">Platforms: 10</span>
+            </div>
+            <div id="station-arrivals-list" class="stack" style="gap:6px;">
+              <!-- JS rendered -->
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ====== ADMIN / CONTROL ROOM VIEW ====== -->
+    <section id="admin-view" style="display:none;">
+
+      <!-- Admin Header -->
+      <div class="rp-card card-pad" style="margin-bottom:16px;">
+        <div class="row" style="gap:10px;">
+          <div style="background:var(--brand-secondary); padding:7px; border-radius:8px;">
+            <i data-lucide="shield" style="color:#fff; width:18px; height:18px;"></i>
+          </div>
+          <div>
+            <h3 data-i18n="occ_title" class="font-display" style="font-size:1.05rem; font-weight:700;">Operations Control Center (OCC)</h3>
+            <p data-i18n="occ_desc" style="font-size:0.68rem; color:var(--text-muted);">Real-Time GNN Inference & Decision Support</p>
+          </div>
+        </div>
+      </div>
+
+      <!-- Tab Buttons -->
+      <div class="row-wrap" style="margin-bottom:16px;">
+        <button id="tab-btn-corridor" onclick="setAdminTab('corridor')" class="btn btn-indigo admin-tab-btn">
+          <i data-lucide="activity" style="width:14px; height:14px;"></i>
+          <span data-i18n="tab_corridor">Corridor Map</span>
+        </button>
+        <button id="tab-btn-whatif" onclick="setAdminTab('whatif')" class="btn btn-secondary admin-tab-btn">
+          <i data-lucide="zap" style="width:14px; height:14px;"></i>
+          <span data-i18n="tab_whatif">What-If Sandbox</span>
+        </button>
+        <button id="tab-btn-benchmark" onclick="setAdminTab('benchmark')" class="btn btn-secondary admin-tab-btn">
+          <i data-lucide="bar-chart-2" style="width:14px; height:14px;"></i>
+          <span data-i18n="tab_benchmarks">Benchmarks</span>
+        </button>
+      </div>
+
+      <!-- Corridor Map Pane -->
+      <div id="pane-corridor" class="admin-pane">
+        <div class="rp-card card-pad">
+          <div class="row-between" style="margin-bottom:12px; flex-wrap:wrap; gap:8px;">
+            <div>
+              <h3 class="font-display" style="font-size:1rem; font-weight:700;">NDLS — HWH Corridor (1,532 km)</h3>
+              <p style="font-size:0.7rem; color:var(--text-muted);">Signal blocks, occupancy & live trains</p>
+            </div>
+            <div class="row" style="gap:12px; font-size:0.7rem; color:var(--text-muted);">
+              <span class="row" style="gap:4px;"><span style="width:10px; height:3px; background:var(--brand-primary); display:inline-block;"></span>DOWN</span>
+              <span class="row" style="gap:4px;"><span style="width:10px; height:3px; background:var(--text-muted); display:inline-block;"></span>UP</span>
+            </div>
+          </div>
+          <div style="width:100%; overflow-x:auto; background:var(--bg-input); border-radius:var(--radius-sm); padding:12px 0; border:1px solid var(--border-color);">
+            <svg id="corridor-svg-track" viewBox="0 0 1200 270" style="width:100%; min-width:900px; height:auto; display:block;">
+              <!-- JS rendered -->
+            </svg>
+          </div>
+        </div>
+      </div>
+
+      <!-- What-If Pane -->
+      <div id="pane-whatif" class="admin-pane" style="display:none;">
+        <div class="rp-card card-pad" style="margin-bottom:16px;">
+          <h3 data-i18n="whatif_title" class="font-display" style="font-size:1.05rem; font-weight:700; margin-bottom:4px;">What-If Cascading Simulator</h3>
+          <p data-i18n="whatif_desc" style="font-size:0.76rem; color:var(--text-secondary); margin-bottom:14px;">
+            Test hypothetical disruptions to forecast network-wide delay propagation.
+          </p>
+          <div style="display:grid; grid-template-columns:repeat(auto-fit, minmax(200px,1fr)); gap:12px; align-items:flex-end; background:var(--bg-input); padding:14px; border-radius:var(--radius-sm); border:1px solid var(--border-color);">
+            <div>
+              <label style="display:block; font-size:0.72rem; color:var(--text-muted); margin-bottom:3px; font-weight:600;">Perturbed Train</label>
+              <select id="whatif-train" style="width:100%;">
+                <option value="12301">12301 — Rajdhani Express</option>
+                <option value="22436">22436 — Vande Bharat</option>
+                <option value="12382">12382 — Poorva Express</option>
+              </select>
+            </div>
+            <div>
+              <label style="display:block; font-size:0.72rem; color:var(--text-muted); margin-bottom:3px; font-weight:600;">Station</label>
+              <select id="whatif-station" class="station-select-dropdown" style="width:100%;"></select>
+            </div>
+            <div>
+              <label style="display:block; font-size:0.72rem; color:var(--text-muted); margin-bottom:3px; font-weight:600;">Hold (min)</label>
+              <input type="number" id="whatif-hold" value="25" min="5" max="60" style="width:100%;">
+            </div>
+            <div>
+              <button id="btn-run-whatif" onclick="runWhatIf()" class="btn btn-indigo" style="width:100%; justify-content:center; padding:9px;">
+                <i data-lucide="play" style="width:14px; height:14px;"></i>
+                <span data-i18n="simulate_btn">Simulate</span>
+              </button>
+            </div>
+          </div>
+        </div>
+
+        <!-- Results -->
+        <div id="whatif-results-container" style="display:none;">
+          <div style="display:grid; grid-template-columns:repeat(auto-fit, minmax(180px,1fr)); gap:12px; margin-bottom:14px;">
+            <div class="rp-card card-pad">
+              <div class="stat-label" data-i18n="impacted_trains">Impacted Trains</div>
+              <div id="whatif-impacted-count" class="stat-value font-display" style="color:var(--brand-primary-light);">2</div>
+            </div>
+            <div class="rp-card card-pad">
+              <div class="stat-label" data-i18n="total_cascade">Total Cascade</div>
+              <div id="whatif-delay-total" class="stat-value font-display" style="color:var(--status-red);">+38.5 min</div>
+            </div>
+            <div class="rp-card card-pad">
+              <div class="stat-label" data-i18n="health_score">Network Health</div>
+              <div id="whatif-health-score" class="stat-value font-display" style="color:var(--status-amber);">82/100</div>
+            </div>
+          </div>
+
+          <div class="rp-card card-pad" style="background:var(--status-green-bg); border-color:color-mix(in srgb, var(--status-green) 20%, transparent); margin-bottom:14px;">
+            <h4 data-i18n="recommendations_title" class="font-display" style="font-size:0.88rem; font-weight:700; color:var(--status-green); margin-bottom:4px;">OCC Recommendations</h4>
+            <ul id="whatif-mitigations-list" style="padding-left:18px; font-size:0.8rem; line-height:1.55;"></ul>
+          </div>
+
+          <div class="rp-card card-pad" style="margin-bottom:14px;">
+            <h4 class="font-display" style="font-size:0.92rem; font-weight:700; margin-bottom:10px;">Cascading Delay Table</h4>
+            <div id="whatif-trains-table" class="stack" style="gap:6px;"></div>
+          </div>
+
+          <div class="rp-card card-pad" style="border-color:var(--brand-secondary);">
+            <div class="row-between" style="flex-wrap:wrap; gap:10px; margin-bottom:10px;">
+              <div>
+                <h4 data-i18n="ai_memo_title" class="font-display" style="font-size:0.95rem; font-weight:700;">AI Dispatch Memo (Mistral)</h4>
+                <p style="font-size:0.68rem; color:var(--text-muted);">Auto-generate Section Controller Orders</p>
+              </div>
+              <button id="btn-gen-memo" onclick="generateAiDispatchMemo()" class="btn btn-indigo">
+                <i data-lucide="file-text" style="width:14px; height:14px;"></i>
+                <span data-i18n="gen_memo_btn">Generate Memo</span>
+              </button>
+            </div>
+            <div id="whatif-memo-box" style="display:none; background:var(--bg-input); padding:14px; border-radius:var(--radius-sm); border:1px solid var(--border-color); white-space:pre-wrap; font-size:0.8rem; line-height:1.55;"></div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Benchmark Pane -->
+      <div id="pane-benchmark" class="admin-pane" style="display:none;">
+        <div style="display:grid; grid-template-columns:repeat(auto-fit, minmax(260px,1fr)); gap:14px;">
+          <div class="rp-card card-pad">
+            <div style="font-size:0.92rem; font-weight:700;">Mean Absolute Error</div>
+            <p style="font-size:0.7rem; color:var(--text-muted); margin-bottom:12px;">Prediction error on dense sections</p>
+            <div class="stack" style="gap:4px; font-size:0.8rem;">
+              <div class="row-between"><span>Static Baseline:</span><span class="font-mono">14.8 min</span></div>
+              <div class="row-between"><span>Tabular GBM:</span><span class="font-mono">8.4 min</span></div>
+              <div class="row-between" style="font-weight:700; color:var(--brand-primary-light);"><span>RailPulse GNN:</span><span class="font-mono">3.9 min (−73.6%)</span></div>
+            </div>
+          </div>
+          <div class="rp-card card-pad">
+            <div style="font-size:0.92rem; font-weight:700;">Confidence Calibration</div>
+            <p style="font-size:0.7rem; color:var(--text-muted); margin-bottom:12px;">90% Conformal Prediction coverage</p>
+            <div class="stack" style="gap:4px; font-size:0.8rem;">
+              <div class="row-between"><span>Static Baseline:</span><span class="font-mono">58.2%</span></div>
+              <div class="row-between"><span>Tabular GBM:</span><span class="font-mono">78.5%</span></div>
+              <div class="row-between" style="font-weight:700; color:var(--status-green);"><span>RailPulse GNN:</span><span class="font-mono">94.2%</span></div>
+            </div>
+          </div>
+          <div class="rp-card card-pad">
+            <div style="font-size:0.92rem; font-weight:700;">Cascade Recall</div>
+            <p style="font-size:0.7rem; color:var(--text-muted); margin-bottom:12px;">Downstream impact detection</p>
+            <div class="stack" style="gap:4px; font-size:0.8rem;">
+              <div class="row-between"><span>Static Baseline:</span><span class="font-mono">0%</span></div>
+              <div class="row-between"><span>Tabular GBM:</span><span class="font-mono">38.0%</span></div>
+              <div class="row-between" style="font-weight:700; color:var(--brand-primary-light);"><span>RailPulse GNN:</span><span class="font-mono">89.4%</span></div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+  </main>
+
+  <!-- ==================== AI COPILOT ==================== -->
+  <div id="copilot-launcher" onclick="toggleCopilot(true)" style="position:fixed; bottom:20px; right:20px; z-index:90; background:var(--brand-primary); color:#fff; padding:10px 16px; border-radius:999px; box-shadow:0 4px 16px rgba(0,120,212,0.35); display:flex; align-items:center; gap:8px; cursor:pointer; border:none; font-size:0.82rem; font-weight:600;">
+    <i data-lucide="message-circle" style="width:18px; height:18px;"></i>
+    AI Copilot
+  </div>
+
+  <div id="copilot-drawer" class="rp-card" style="display:none; position:fixed; bottom:20px; right:20px; width:360px; max-width:calc(100vw - 40px); height:500px; z-index:95; flex-direction:column; overflow:hidden; box-shadow:var(--shadow-elevated); border-color:var(--border-focus);">
+    <div style="padding:12px 14px; background:var(--bg-card-hover); border-bottom:1px solid var(--border-color); display:flex; justify-content:space-between; align-items:center;">
+      <div class="row" style="gap:8px;">
+        <i data-lucide="message-circle" style="color:var(--brand-primary-light); width:18px; height:18px;"></i>
+        <div>
+          <h4 data-i18n="copilot_title" class="font-display" style="font-size:0.88rem; font-weight:700;">RailPulse AI</h4>
+          <span data-i18n="copilot_desc" style="font-size:0.62rem; color:var(--text-muted);">Live GNN telemetry</span>
+        </div>
+      </div>
+      <button onclick="toggleCopilot(false)" class="btn btn-secondary" style="padding:3px 5px;">
+        <i data-lucide="x" style="width:13px; height:13px;"></i>
+      </button>
+    </div>
+
+    <div id="copilot-messages" style="flex:1; padding:12px; overflow-y:auto; display:flex; flex-direction:column; gap:10px; background:var(--bg-input);"></div>
+
+    <div id="copilot-typing" style="display:none; align-items:center; gap:5px; padding:6px 12px; font-size:0.7rem; color:var(--text-muted); background:var(--bg-card);">
+      <span class="pulse-dot" style="background:var(--brand-primary);"></span> Analyzing...
+    </div>
+
+    <div style="padding:5px 8px; background:var(--bg-card); border-top:1px solid var(--border-subtle); display:flex; gap:5px; overflow-x:auto;">
+      <button onclick="sendCopilotMessage('Why is my train delayed?')" class="btn btn-secondary" style="font-size:0.65rem; padding:3px 7px; flex-shrink:0; white-space:nowrap;">
+        <span data-i18n="ask_why_delayed">Why delayed?</span>
+      </button>
+      <button onclick="sendCopilotMessage('Will I make my connection?')" class="btn btn-secondary" style="font-size:0.65rem; padding:3px 7px; flex-shrink:0; white-space:nowrap;">
+        <span data-i18n="ask_connection">Connection?</span>
+      </button>
+      <button onclick="sendCopilotMessage('Explain ETA window')" class="btn btn-secondary" style="font-size:0.65rem; padding:3px 7px; flex-shrink:0; white-space:nowrap;">
+        <span data-i18n="ask_window">ETA window</span>
+      </button>
+    </div>
+
+    <form onsubmit="event.preventDefault(); sendCopilotMessage();" style="padding:8px 10px; background:var(--bg-surface); border-top:1px solid var(--border-color); display:flex; gap:6px;">
+      <input type="text" id="copilot-input" placeholder="Ask about your train..." style="flex:1; padding:7px 10px; font-size:0.78rem;">
+      <button type="submit" class="btn btn-primary" style="padding:7px 10px;">
+        <i data-lucide="send" style="width:13px; height:13px;"></i>
+      </button>
+    </form>
+  </div>
+
+  <!-- ==================== FEEDER MODAL ==================== -->
+  <div id="feeder-modal" class="modal-overlay" style="display:none;">
+    <div class="modal-content">
+      <button onclick="closeFeederModal()" class="btn btn-secondary" style="position:absolute; right:12px; top:12px; padding:4px;">
+        <i data-lucide="x" style="width:14px; height:14px;"></i>
+      </button>
+      <h3 class="font-display" style="font-size:1.05rem; font-weight:700; margin-bottom:5px;">Last-Mile Transport</h3>
+      <p style="font-size:0.74rem; color:var(--text-secondary); margin-bottom:14px;">
+        Cab or alert triggers when ETA confidence is within ±8 min.
+      </p>
+      <form onsubmit="submitFeederForm(event)" class="stack" style="gap:10px;">
+        <div>
+          <label style="display:block; font-size:0.72rem; color:var(--text-muted); margin-bottom:3px;">Name</label>
+          <input type="text" id="feeder-name" required placeholder="Rohan Sharma" style="width:100%;">
+        </div>
+        <div>
+          <label style="display:block; font-size:0.72rem; color:var(--text-muted); margin-bottom:3px;">Mobile / WhatsApp</label>
+          <input type="text" id="feeder-phone" required placeholder="+91-9876543210" style="width:100%;">
+        </div>
+        <div>
+          <label style="display:block; font-size:0.72rem; color:var(--text-muted); margin-bottom:3px;">Service</label>
+          <select id="feeder-mode" style="width:100%;">
+            <option value="CAB_AGGREGATOR">Ola / Uber Cab</option>
+            <option value="EV_FEEDER_BUS">EV Feeder Shuttle</option>
+            <option value="PASSENGER_SMS">WhatsApp / SMS Alert</option>
+          </select>
+        </div>
+        <div class="row" style="justify-content:flex-end; gap:8px; margin-top:6px;">
+          <button type="button" onclick="closeFeederModal()" class="btn btn-secondary">Cancel</button>
+          <button type="submit" class="btn btn-primary">Confirm</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- Footer -->
+  <footer class="rp-footer">
+    RailPulse © 2026 — SIH Problem Statement #26028 | Ministry of Railways, Indian Railways
+  </footer>
+
+  <script src="/static/js/app.js"></script>
+  <script>document.addEventListener('DOMContentLoaded', () => lucide.createIcons());</script>
+</body>
+</html>
