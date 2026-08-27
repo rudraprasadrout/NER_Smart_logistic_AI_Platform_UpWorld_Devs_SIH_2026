@@ -1,14 +1,12 @@
 @echo off
-echo ===================================================
-echo   Starting RailPulse Backend (FastAPI) & Frontend (Vite)
-echo ===================================================
-
-start "RailPulse Backend" cmd /k "set PYTHONPATH=backend && python -m uvicorn app.main:app --host 127.0.0.1 --port 8000 --reload"
-start "RailPulse Frontend" cmd /k "cd frontend && npm run dev"
-
+title RailPulse — SIH 2026 Problem Statement #26028
+echo ========================================================
+echo   Starting RailPulse (Pure Python Flask + HTML/CSS/JS)
+echo   SIH 2026 Problem Statement #26028
+echo ========================================================
 echo.
-echo RailPulse services started!
-echo Frontend: http://localhost:5173
-echo Backend API: http://localhost:8000
-echo Swagger Docs: http://localhost:8000/docs
-echo ===================================================
+
+set PYTHONPATH=backend
+start http://127.0.0.1:5000
+python server.py
+pause

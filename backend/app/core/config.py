@@ -1,5 +1,7 @@
+import os
 from pathlib import Path
 from pydantic import BaseModel
+from typing import Optional
 
 BASE_DIR = Path(__file__).resolve().parent.parent.parent.parent
 DATA_DIR = BASE_DIR / "data"
@@ -15,5 +17,9 @@ class Settings(BaseModel):
     # Simulation defaults
     SIMULATION_TICK_SECONDS: float = 1.0
     SIMULATION_TIME_SCALE: float = 10.0  # 1 real second = 10 simulated seconds
+
+    # Mistral AI LLM Key
+    MISTRAL_API_KEY: Optional[str] = os.getenv("MISTRAL_API_KEY", "")
+    MISTRAL_MODEL: str = os.getenv("MISTRAL_MODEL", "mistral-small-latest")
 
 settings = Settings()

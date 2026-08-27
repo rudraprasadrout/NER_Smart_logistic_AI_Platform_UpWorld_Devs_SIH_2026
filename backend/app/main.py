@@ -11,6 +11,7 @@ from app.api.routes_stations import router as stations_router
 from app.api.routes_whatif import router as whatif_router
 from app.api.routes_simulator import router as simulator_router
 from app.api.routes_feeder import router as feeder_router
+from app.api.routes_copilot import router as copilot_router
 
 # WebSocket connection manager for live dashboard updates
 class ConnectionManager:
@@ -76,6 +77,7 @@ app.include_router(stations_router)
 app.include_router(whatif_router)
 app.include_router(simulator_router)
 app.include_router(feeder_router)
+app.include_router(copilot_router)
 
 @app.get("/")
 def root():
