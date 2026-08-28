@@ -1,12 +1,10 @@
 import os
 import csv
-
-BASE_DIR = os.path.abspath(os.path.join(os.path.dirname(__file__), '..'))
-DATA_DIR = os.path.join(BASE_DIR, 'data')
+from config import Config
 
 def load_nodes():
     """Loads settlements and hubs from data/ner_nodes.csv."""
-    nodes_file = os.path.join(DATA_DIR, 'ner_nodes.csv')
+    nodes_file = os.path.join(Config.DATA_DIR, 'ner_nodes.csv')
     nodes = {}
     with open(nodes_file, mode='r', encoding='utf-8') as f:
         reader = csv.DictReader(f)
@@ -27,7 +25,7 @@ def load_nodes():
 
 def load_edges():
     """Loads road segments from data/ner_edges.csv with parsed geometry waypoints."""
-    edges_file = os.path.join(DATA_DIR, 'ner_edges.csv')
+    edges_file = os.path.join(Config.DATA_DIR, 'ner_edges.csv')
     edges = []
     with open(edges_file, mode='r', encoding='utf-8') as f:
         reader = csv.DictReader(f)
@@ -58,7 +56,7 @@ def load_edges():
 
 def load_weather():
     """Loads district-wise weather and 72-hour forecast data from data/weather_data.csv."""
-    weather_file = os.path.join(DATA_DIR, 'weather_data.csv')
+    weather_file = os.path.join(Config.DATA_DIR, 'weather_data.csv')
     weather = {}
     with open(weather_file, mode='r', encoding='utf-8') as f:
         reader = csv.DictReader(f)
@@ -76,7 +74,7 @@ def load_weather():
 
 def load_historical_disruptions():
     """Loads historical incident records for ML model training from data/historical_disruptions.csv."""
-    hist_file = os.path.join(DATA_DIR, 'historical_disruptions.csv')
+    hist_file = os.path.join(Config.DATA_DIR, 'historical_disruptions.csv')
     records = []
     with open(hist_file, mode='r', encoding='utf-8') as f:
         reader = csv.DictReader(f)
