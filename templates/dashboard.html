@@ -1,0 +1,133 @@
+{% extends "base.html" %}
+
+{% block title %}Control Room — PathNER{% endblock %}
+
+{% block content %}
+<div class="dash-layout">
+
+  <!-- LEFT PANEL: Isolation Index -->
+  <div class="panel">
+    <div class="panel-head">
+      <span class="panel-head-title" data-i18n="isolation_panel_title">Isolation Index</span>
+      <span class="panel-head-badge">Live</span>
+    </div>
+    <div class="panel-scroll">
+      <input type="text" id="iso-search" class="search-box" placeholder="Search settlement or district...">
+      <div class="filter-row">
+        <button class="filter-chip active" data-filter="ALL">All</button>
+        <button class="filter-chip" data-filter="ISOLATED">Isolated</button>
+        <button class="filter-chip" data-filter="AT_RISK">At Risk</button>
+      </div>
+      <div id="iso-list">
+        <div style="text-align:center;color:var(--text-tertiary);padding:24px;font-size:12px">Loading...</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- CENTER: KPIs + Toolbar + Map -->
+  <div class="center-stack">
+    <div class="kpi-strip">
+      <div class="kpi-cell">
+        <div class="kpi-cell-label" data-i18n="isolated_pop">Stranded Population</div>
+        <div class="kpi-cell-value v-danger" id="kpi-iso-pop">0</div>
+        <div class="kpi-cell-sub">Fully severed</div>
+      </div>
+      <div class="kpi-cell">
+        <div class="kpi-cell-label" data-i18n="isolated_count">Severed Hamlets</div>
+        <div class="kpi-cell-value v-danger" id="kpi-iso-count">0</div>
+        <div class="kpi-cell-sub">0% reachability</div>
+      </div>
+      <div class="kpi-cell">
+        <div class="kpi-cell-label" data-i18n="at_risk_pop">At-Risk Population</div>
+        <div class="kpi-cell-value v-warn" id="kpi-risk-pop">0</div>
+        <div class="kpi-cell-sub">Impending isolation</div>
+      </div>
+      <div class="kpi-cell">
+        <div class="kpi-cell-label" data-i18n="severed_roads">Blocked Corridors</div>
+        <div class="kpi-cell-value v-accent" id="kpi-blocked">0</div>
+        <div class="kpi-cell-sub">Risk &ge; 70%</div>
+      </div>
+    </div>
+
+    <div class="toolbar">
+      <div class="toolbar-group">
+        <span class="toolbar-label" data-i18n="forecast_timeline">72h Forecast</span>
+        <button class="tb-btn active" data-horizon="current">Now</button>
+        <button class="tb-btn" data-horizon="24h">+24h</button>
+        <button class="tb-btn" data-horizon="48h">+48h</button>
+        <button class="tb-btn" data-horizon="72h">+72h</button>
+      </div>
+      <div class="toolbar-group">
+        <span class="toolbar-sublabel">Precipitation & Landslide Trajectory</span>
+        <button id="btn-forecast-play" class="tb-btn-icon" title="Auto-play">&#9654;</button>
+      </div>
+    </div>
+
+    <div class="map-wrap">
+      <div id="map-container"></div>
+      <div class="map-legend">
+        <div class="legend-title">Accessibility Index</div>
+        <div class="legend-row"><span class="legend-line" style="background:#34d399"></span> Safe (0–24%)</div>
+        <div class="legend-row"><span class="legend-line" style="background:#fbbf24"></span> Caution (25–49%)</div>
+        <div class="legend-row"><span class="legend-line" style="background:#f97316"></span> Severe (50–69%)</div>
+        <div class="legend-row"><span class="legend-line" style="background:#ef4444;border-style:dashed"></span> Severed (&ge;70%)</div>
+        <div class="legend-row" style="margin-top:4px"><span class="legend-dot" style="background:#6366f1"></span> Supply Hub</div>
+        <div class="legend-row"><span class="legend-dot" style="background:#8b5cf6"></span> Active Convoy</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- RIGHT PANEL: Charts, AI, Fleet, Alerts -->
+  <div class="panel" style="border-right:none">
+    <div class="panel-scroll" style="padding:12px;display:flex;flex-direction:column;gap:10px">
+
+      <!-- Chart -->
+      <div>
+        <div class="panel-head" style="padding:0 0 8px 0;border-bottom:none">
+          <span class="panel-head-title">Risk vs Rainfall</span>
+          <span class="panel-head-badge">72h Model</span>
+        </div>
+        <div class="chart-container">
+          <canvas id="forecast-chart-canvas"></canvas>
+        </div>
+      </div>
+
+      <!-- AI Explainability -->
+      <div id="explainability-drawer">
+        <div class="panel-head" style="padding:0 0 8px 0;border-bottom:none">
+          <span class="panel-head-title">Risk Attribution</span>
+          <span class="panel-head-badge">SHAP ML</span>
+        </div>
+        <div style="text-align:center;color:var(--text-tertiary);font-size:12px;padding:16px 0">
+          Click a road segment on the map to inspect AI hazard attribution.
+        </div>
+      </div>
+
+      <!-- Fleet -->
+      <div>
+        <div class="panel-head" style="padding:0 0 8px 0;border-bottom:none">
+          <span class="panel-head-title">Supply Fleet</span>
+          <span class="panel-head-badge">GPS Live</span>
+        </div>
+        <div id="vehicle-fleet-container">
+          <div style="text-align:center;color:var(--text-tertiary);font-size:12px;padding:12px 0">Tracking convoys...</div>
+        </div>
+      </div>
+
+      <!-- Alerts -->
+      <div>
+        <div class="panel-head" style="padding:0 0 8px 0;border-bottom:none">
+          <span class="panel-head-title" data-i18n="active_alerts_title">Alerts</span>
+        </div>
+        <div id="alerts-list-container"></div>
+      </div>
+
+    </div>
+  </div>
+
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script src="{{ url_for('static', filename='js/app.js') }}"></script>
+{% endblock %}

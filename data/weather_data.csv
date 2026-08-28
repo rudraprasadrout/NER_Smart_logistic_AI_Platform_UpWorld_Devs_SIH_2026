@@ -1,0 +1,10 @@
+district,current_rainfall_mm,forecast_24h_mm,forecast_48h_mm,forecast_72h_mm,soil_saturation_index,weather_condition
+Kamrup Metropolitan,18.5,24.0,35.0,20.0,0.42,Moderate Showers
+Ri-Bhoi,32.0,45.0,52.0,30.0,0.55,Heavy Rain
+East Khasi Hills,85.0,120.0,145.0,95.0,0.88,Very Heavy Monsoon Downpour
+West Khasi Hills,28.0,36.0,44.0,25.0,0.50,Intermittent Rain
+West Jaintia Hills,45.0,65.0,80.0,50.0,0.68,Heavy Rain
+East Jaintia Hills,92.0,135.0,160.0,110.0,0.94,Torrential Downpour & Fissures
+Dima Hasao,38.0,50.0,62.0,40.0,0.62,Heavy Showers
+Cachar,22.0,30.0,45.0,28.0,0.48,Overcast with Rain
+Karimganj,25.0,34.0,48.0,30.0,0.52,Overcast with Rain

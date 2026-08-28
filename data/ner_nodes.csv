@@ -1,0 +1,16 @@
+id,name,district,state,lat,lon,type,population,buffer_days,description
+guwahati_hub,Guwahati Central Logistic Hub,Kamrup Metropolitan,Assam,26.1445,91.7362,supply_hub,1116267,15,Primary mega-logistics depot & transit hub for Northeast
+shillong_hub,Shillong District Depot,East Khasi Hills,Meghalaya,25.5788,91.8933,supply_hub,354759,10,State capital hub and medical supply redistribution center
+silchar_hub,Silchar Relief Base,Cachar,Assam,24.8170,92.7926,supply_hub,229136,12,Barak Valley strategic supply head for South Assam Mizoram & Tripura
+nongpoh,Nongpoh,Ri-Bhoi,Meghalaya,25.9038,91.8797,town,17055,5,Midpoint transit town on Guwahati-Shillong NH-6 expressway corridor
+cherrapunjee,Cherrapunjee (Sohra),East Khasi Hills,Meghalaya,25.2702,91.7323,remote_village,14816,3,Extreme high-rainfall zone prone to flash runoff and escarpment landslides
+mawsynram,Mawsynram,East Khasi Hills,Meghalaya,25.2986,91.5822,remote_village,8450,2,Wettest place on earth vulnerable to mudslides cutting off access from Shillong
+jowai,Jowai,West Jaintia Hills,Meghalaya,25.4526,92.2035,town,28423,6,Major junction on NH-6 connecting Khasi Hills to Barak Valley
+khliehriat,Khliehriat,East Jaintia Hills,Meghalaya,25.3564,92.3683,town,13958,4,High-risk coal belt sector with recurring highway cave-ins and mud collapses
+sonapur_tunnel,Sonapur Sector,East Jaintia Hills,Meghalaya,25.1147,92.3619,junction,3200,1,Critical landslide bottleneck on NH-6 leading into Barak Valley
+dawki,Dawki Border Post,West Jaintia Hills,Meghalaya,25.1874,92.0163,remote_village,6500,3,Border trade and river crossing hub with steep gorge roads
+nongstoin,Nongstoin,West Khasi Hills,Meghalaya,25.5173,91.2689,town,28742,4,Western highland hub providing alternate arterial link
+haflong,Haflong,Dima Hasao,Assam,25.1667,93.0167,town,43756,5,Hill station junction on alternate NH-27 Mahur bypass connecting to Silchar
+umrangso,Umrangso,Dima Hasao,Assam,25.5133,92.7481,remote_village,10376,2,Reservoir valley settlement connecting Meghalaya border to Haflong hills
+lumshnong,Lumshnong,East Jaintia Hills,Meghalaya,25.1764,92.3820,remote_village,4820,2,Limestone canyon sector on NH-6 vulnerable to flash torrents
+badarpur,Badarpur Junction,Karimganj,Assam,24.8964,92.5931,junction,13580,6,Barak river gateway connecting NH-6 with Silchar city

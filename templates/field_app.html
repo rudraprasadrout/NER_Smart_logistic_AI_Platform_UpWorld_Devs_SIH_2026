@@ -1,0 +1,156 @@
+{% extends "base.html" %}
+
+{% block title %}Field Reporter — PathNER{% endblock %}
+
+{% block content %}
+<div class="field-page">
+
+  <div class="field-card">
+    <div id="network-status-banner" class="net-banner online">
+      <span>Network: <b>ONLINE</b></span>
+      <span>Auto-Sync Active</span>
+    </div>
+    <div id="sync-status-msg" style="font-size:11px;color:var(--accent-secondary);margin-bottom:12px;text-align:center;font-weight:600"></div>
+
+    <div class="field-card-title">Field Incident Reporter</div>
+    <div class="field-card-desc">
+      For BRO, PWD, and District Disaster Management field officers in zero-connectivity or 2G hill terrains. Reports are queued locally and auto-synced when connectivity is restored.
+    </div>
+
+    <form id="incident-form">
+      <div class="form-group">
+        <label class="form-label">Officer / Unit</label>
+        <input type="text" id="rep-name" class="form-input" placeholder="e.g. Sub-Inspector R. Marak (BRO 758 TF)" required value="Inspector K. Lyngdoh (PWD Jowai)">
+      </div>
+
+      <div class="form-group">
+        <label class="form-label">Affected Road Sector</label>
+        <select id="rep-edge-id" class="form-input">
+          <option value="e_lumshnong_sonapur">NH-6 Lumshnong – Sonapur Landslide Zone</option>
+          <option value="e_khliehriat_lumshnong">NH-6 Khliehriat – Lumshnong Canyon</option>
+          <option value="e_shillong_cherra">SH-5 Shillong – Sohra Scenic Highway</option>
+          <option value="e_shillong_mawsynram">Shillong – Mawsynram Hill Arterial</option>
+          <option value="e_nongpoh_shillong">NH-6 Nongpoh – Shillong Ghat Section</option>
+          <option value="e_haflong_silchar">NH-27 Haflong – Silchar Bypass</option>
+        </select>
+      </div>
+
+      <div class="two-col">
+        <div class="form-group">
+          <label class="form-label">Hazard Type</label>
+          <select id="rep-hazard-type" class="form-input">
+            <option value="Major Landslide / Debris">Major Landslide / Debris</option>
+            <option value="Flash Flood / Road Submersion">Flash Flood / Submersion</option>
+            <option value="Highway Fissure / Cave-in">Highway Fissure / Cave-in</option>
+            <option value="Culvert / Bridge Washout">Bridge Washout</option>
+            <option value="Heavy Mudslip">Heavy Mudslip</option>
+          </select>
+        </div>
+
+        <div class="form-group">
+          <label class="form-label">Severity</label>
+          <select id="rep-severity" class="form-input">
+            <option value="Critical (Road Completely Severed)" selected>Critical (Road Severed)</option>
+            <option value="Severe (Single-Lane Escort Only)">Severe (Single-Lane)</option>
+            <option value="Moderate (Slow Crawl)">Moderate (Slow Crawl)</option>
+          </select>
+        </div>
+      </div>
+
+      <div class="form-group">
+        <label class="form-label">Geo-Coordinates</label>
+        <div class="geo-row">
+          <input type="text" id="rep-lat" class="form-input" value="25.1430" placeholder="Latitude">
+          <input type="text" id="rep-lon" class="form-input" value="92.3710" placeholder="Longitude">
+          <button type="button" id="btn-geolocate" class="btn btn-ghost" style="white-space:nowrap">GPS Locate</button>
+        </div>
+      </div>
+
+      <div class="form-group">
+        <label class="form-label">Incident Photo</label>
+        <input type="file" id="rep-photo" class="form-input" accept="image/*" style="padding:6px">
+        <div id="photo-preview-container" style="display:none;margin-top:8px">
+          <img id="photo-preview" src="" alt="Site Preview" style="max-height:120px;border-radius:var(--radius-md);border:1px solid var(--border-primary)">
+        </div>
+      </div>
+
+      <div class="form-group">
+        <label class="form-label">Ground Observations</label>
+        <textarea id="rep-desc" class="form-input" rows="3" placeholder="e.g. 50m of mountain slope collapsed across both lanes near Sonapur tunnel. 3 excavators dispatched, est. 14h clearance."></textarea>
+      </div>
+
+      <button type="submit" class="btn btn-danger" style="width:100%;justify-content:center;padding:10px">
+        Submit Incident Report
+      </button>
+    </form>
+
+    <div class="queue-section">
+      <div class="queue-title">Local Offline Queue</div>
+      <div id="queued-reports-list"></div>
+    </div>
+  </div>
+
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script src="{{ url_for('static', filename='js/field_reporter.js') }}"></script>
+<script>
+document.addEventListener('DOMContentLoaded', () => {
+  window.fieldReporter.updateOnlineStatus(navigator.onLine);
+  window.fieldReporter.renderQueueList();
+
+  const photoInput = document.getElementById('rep-photo');
+  const preview = document.getElementById('photo-preview');
+  const previewBox = document.getElementById('photo-preview-container');
+
+  if (photoInput) {
+    photoInput.addEventListener('change', function() {
+      const file = this.files[0];
+      if (file) {
+        const reader = new FileReader();
+        reader.onload = e => { preview.src = e.target.result; previewBox.style.display = 'block'; };
+        reader.readAsDataURL(file);
+      }
+    });
+  }
+
+  const geoBtn = document.getElementById('btn-geolocate');
+  if (geoBtn) {
+    geoBtn.addEventListener('click', () => {
+      if (!navigator.geolocation) { alert('Geolocation not supported.'); return; }
+      geoBtn.textContent = 'Locating...';
+      navigator.geolocation.getCurrentPosition(
+        pos => {
+          document.getElementById('rep-lat').value = pos.coords.latitude.toFixed(5);
+          document.getElementById('rep-lon').value = pos.coords.longitude.toFixed(5);
+          geoBtn.textContent = 'Located';
+        },
+        err => { alert('Geolocation error: ' + err.message); geoBtn.textContent = 'GPS Locate'; }
+      );
+    });
+  }
+
+  const form = document.getElementById('incident-form');
+  if (form) {
+    form.addEventListener('submit', async e => {
+      e.preventDefault();
+      const payload = {
+        reporter_name: document.getElementById('rep-name').value,
+        edge_id: document.getElementById('rep-edge-id').value,
+        hazard_type: document.getElementById('rep-hazard-type').value,
+        severity: document.getElementById('rep-severity').value,
+        lat: parseFloat(document.getElementById('rep-lat').value),
+        lon: parseFloat(document.getElementById('rep-lon').value),
+        description: document.getElementById('rep-desc').value || 'Hazard report from field unit.'
+      };
+      const res = await window.fieldReporter.submitReport(payload);
+      alert(res.message || 'Report submitted.');
+      document.getElementById('rep-desc').value = '';
+      if (previewBox) previewBox.style.display = 'none';
+      if (photoInput) photoInput.value = '';
+    });
+  }
+});
+</script>
+{% endblock %}
