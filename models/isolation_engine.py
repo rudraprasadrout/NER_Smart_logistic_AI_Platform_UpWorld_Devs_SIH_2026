@@ -11,10 +11,10 @@ class IsolationEngine:
         # Ensure graph is evaluated for current horizon
         graph_engine.rebuild_graph(horizon=horizon)
         G = graph_engine.graph
-        nodes = graph_engine.nodes
+        nodes = {k: v for k, v in graph_engine.nodes.items() if not k.startswith('_')}
 
         # Identify supply hubs
-        supply_hubs = [n_id for n_id, data in nodes.items() if data['type'] == 'supply_hub']
+        supply_hubs = [n_id for n_id, data in nodes.items() if data.get('type') == 'supply_hub']
         
         # Build passable subgraph (excluding blocked edges >= 70.0 risk)
         passable_G = nx.Graph()

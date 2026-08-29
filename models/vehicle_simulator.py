@@ -12,13 +12,13 @@ class VehicleSimulator:
                 'priority': 'CRITICAL',
                 'origin': 'guwahati_hub',
                 'destination': 'silchar_hub',
-                'current_edge': 'e_jowai_umrangso',
+                'current_edge': 'osm_edge_0005',
                 'progress_pct': 35.0,
                 'speed_kmh': 42.0,
                 'status': 'EN_ROUTE_SAFE_DETOUR',
                 'delay_min': 15,
-                'lat': 25.4800,
-                'lon': 92.4800,
+                'lat': 25.0079,
+                'lon': 92.5020,
                 'driver': 'T. Sangma (BRO Transit Wing)'
             },
             {
@@ -28,13 +28,13 @@ class VehicleSimulator:
                 'priority': 'CRITICAL',
                 'origin': 'guwahati_hub',
                 'destination': 'shillong_hub',
-                'current_edge': 'e_nongpoh_shillong',
+                'current_edge': 'osm_edge_0017',
                 'progress_pct': 72.0,
                 'speed_kmh': 45.0,
                 'status': 'ON_SCHEDULE',
                 'delay_min': 0,
-                'lat': 25.6890,
-                'lon': 91.8840,
+                'lat': 25.1084,
+                'lon': 92.3613,
                 'driver': 'R. Das'
             },
             {
@@ -44,13 +44,13 @@ class VehicleSimulator:
                 'priority': 'HIGH',
                 'origin': 'shillong_hub',
                 'destination': 'jowai',
-                'current_edge': 'e_shillong_jowai',
+                'current_edge': 'osm_edge_0002',
                 'progress_pct': 50.0,
                 'speed_kmh': 48.0,
                 'status': 'ON_SCHEDULE',
                 'delay_min': 5,
-                'lat': 25.5340,
-                'lon': 92.0520,
+                'lat': 25.1153,
+                'lon': 92.0847,
                 'driver': 'B. Khongwir'
             },
             {
@@ -60,13 +60,13 @@ class VehicleSimulator:
                 'priority': 'HIGH',
                 'origin': 'silchar_hub',
                 'destination': 'haflong',
-                'current_edge': 'e_haflong_silchar',
+                'current_edge': 'osm_edge_0012',
                 'progress_pct': 20.0,
                 'speed_kmh': 38.0,
                 'status': 'CAUTION_HIGH_SLOPE',
                 'delay_min': 25,
-                'lat': 24.9800,
-                'lon': 92.9200,
+                'lat': 25.0617,
+                'lon': 92.3847,
                 'driver': 'A. Choudhury'
             }
         ]
@@ -91,7 +91,7 @@ class VehicleSimulator:
 
         for v in self.vehicles:
             # Advance progress slightly
-            inc = (v['speed_kmh'] * (dt / 3600.0) / 50.0) * 100.0
+            inc = (v['speed_kmh'] * (dt / 3600.0) / max(1.0, 50.0)) * 100.0
             v['progress_pct'] = (v['progress_pct'] + inc) % 100.0
 
             # Interpolate lat/lon on current edge
