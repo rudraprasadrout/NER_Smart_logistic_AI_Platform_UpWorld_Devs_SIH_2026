@@ -19,9 +19,12 @@ class MapEngine {
     if (!this.map) return;
     if (this.tile) this.map.removeLayer(this.tile);
     const url = theme === 'light'
-      ? 'https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png'
-      : 'https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png';
-    this.tile = L.tileLayer(url, { maxZoom: 18, subdomains: 'abcd' }).addTo(this.map);
+      ? 'https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png'
+      : 'https://server.arcgisonline.com/ArcGIS/rest/services/Canvas/World_Dark_Gray_Base/MapServer/tile/{z}/{y}/{x}';
+    const attribution = theme === 'light'
+      ? '© OpenStreetMap contributors'
+      : 'Tiles © Esri — Esri, DeLorme, NAVTEQ';
+    this.tile = L.tileLayer(url, { maxZoom: 18, attribution }).addTo(this.map);
   }
 
   renderAccessibilityGraph(data, onEdgeClick) {
@@ -105,13 +108,81 @@ class MapEngine {
     this.routeLayers.forEach(l => this.map.removeLayer(l));
     this.routeLayers = [];
     if (!routeData) return;
+
+    const def = routeData.default_route;
     const safe = routeData.ai_recommended_route;
-    if (safe && safe.polyline_geometry) {
-      const line = L.polyline(safe.polyline_geometry, {
-        color: '#6366f1', weight: 6, opacity: 0.95, lineCap: 'round', lineJoin: 'round'
+    const bounds = [];
+
+    // 1. Draw Default Shortest Route (Dashed orange/red showing the direct path)
+    if (def && def.polyline_geometry && def.polyline_geometry.length >= 2) {
+      const defLine = L.polyline(def.polyline_geometry, {
+        color: '#f97316',
+        weight: 5,
+        opacity: 0.75,
+        dashArray: '8, 8',
+        lineCap: 'round',
+        lineJoin: 'round'
       }).addTo(this.map);
-      this.routeLayers.push(line);
-      this.map.fitBounds(line.getBounds(), { padding: [40, 40] });
+      
+      defLine.bindPopup(`
+        <div style="font-weight:700;color:#f97316;font-size:12px;margin-bottom:4px">Standard Shortest Route</div>
+        <div style="font-size:11px;color:var(--text-secondary)">Distance: <b>${def.total_distance_km} km</b></div>
+        <div style="font-size:11px;color:var(--text-secondary)">Est. Travel Time: <b>${def.total_time_hours}h</b></div>
+        <div style="font-size:11px;color:var(--status-danger)">Avg Risk Score: <b>${def.avg_risk_score}%</b></div>
+        <div style="font-size:11px;color:var(--status-danger)">Blocked Sectors: <b>${def.blocked_segments_count}</b></div>
+      `);
+      this.routeLayers.push(defLine);
+      def.polyline_geometry.forEach(p => bounds.push(p));
+    }
+
+    // 2. Draw AI Recommended Safe Route (Solid vibrant emerald/indigo showing safest path)
+    if (safe && safe.polyline_geometry && safe.polyline_geometry.length >= 2) {
+      const safeLine = L.polyline(safe.polyline_geometry, {
+        color: '#10b981',
+        weight: 6,
+        opacity: 0.95,
+        lineCap: 'round',
+        lineJoin: 'round'
+      }).addTo(this.map);
+      
+      safeLine.bindPopup(`
+        <div style="font-weight:700;color:#10b981;font-size:12px;margin-bottom:4px">AI Recommended Safe Route</div>
+        <div style="font-size:11px;color:var(--text-secondary)">Distance: <b>${safe.total_distance_km} km</b></div>
+        <div style="font-size:11px;color:var(--text-secondary)">Est. Travel Time: <b>${safe.total_time_hours}h</b></div>
+        <div style="font-size:11px;color:var(--status-safe)">Avg Risk Score: <b>${safe.avg_risk_score}%</b></div>
+        <div style="font-size:11px;color:var(--status-safe)">Blocked Sectors: <b>${safe.blocked_segments_count}</b></div>
+      `);
+      this.routeLayers.push(safeLine);
+      safe.polyline_geometry.forEach(p => bounds.push(p));
+    }
+
+    // 3. Add Origin and Destination Waypoint Markers
+    if (routeData.from) {
+      const fromIcon = L.divIcon({
+        className: 'node-marker m-hub',
+        html: '<span style="font-size:10px;font-weight:800;color:#fff">START</span>',
+        iconSize: [44, 20],
+        iconAnchor: [22, 10]
+      });
+      const startMarker = L.marker([routeData.from.lat, routeData.from.lon], { icon: fromIcon }).addTo(this.map);
+      startMarker.bindPopup(`<b>Origin:</b> ${routeData.from.name}`);
+      this.routeLayers.push(startMarker);
+    }
+
+    if (routeData.to) {
+      const toIcon = L.divIcon({
+        className: 'node-marker m-danger',
+        html: '<span style="font-size:10px;font-weight:800;color:#fff">DEST</span>',
+        iconSize: [40, 20],
+        iconAnchor: [20, 10]
+      });
+      const endMarker = L.marker([routeData.to.lat, routeData.to.lon], { icon: toIcon }).addTo(this.map);
+      endMarker.bindPopup(`<b>Destination:</b> ${routeData.to.name}`);
+      this.routeLayers.push(endMarker);
+    }
+
+    if (bounds.length > 0) {
+      this.map.fitBounds(L.latLngBounds(bounds), { padding: [50, 50] });
     }
   }
 

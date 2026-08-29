@@ -114,10 +114,10 @@ async function calcRoute() {
   const badge = document.getElementById('route-rec-badge');
 
   if (from === to) { alert('Origin and destination cannot be identical.'); return; }
-  box.innerHTML = '<div style="text-align:center;color:var(--text-tertiary);padding:32px;font-size:12px">Computing optimal path...</div>';
+  box.innerHTML = '<div style="text-align:center;color:var(--text-tertiary);padding:32px;font-size:12px">Evaluating multi-criteria hazard avoidance...</div>';
 
   try {
-    const res = await fetch(`/api/v1/route/${from}/${to}`);
+    const res = await fetch(`/api/v1/route/${from}/${to}?priority=${encodeURIComponent(priority)}`);
     const d = await res.json();
     if (d.status !== 'success') throw new Error(d.message || 'Route computation failed');
 
@@ -132,34 +132,52 @@ async function calcRoute() {
 
     box.innerHTML = `
       <div style="display:flex;flex-direction:column;gap:10px">
-        <!-- AI Safe -->
-        <div style="background:var(--accent-muted);border:1px solid var(--border-active);border-radius:var(--radius-md);padding:12px">
-          <div style="font-weight:700;color:var(--accent);font-size:12px;margin-bottom:4px">AI Recommended Safe Path</div>
-          <div style="font-size:12px;color:var(--text-primary);font-weight:600;margin-bottom:6px">${safe.node_names.join(' → ')}</div>
-          <div class="s-card-stats">
-            <span>Dist: <b>${safe.total_distance_km} km</b></span>
-            <span>Time: <b>${safe.total_time_hours}h</b></span>
-            <span style="color:var(--status-safe)">Risk: <b>${safe.avg_risk_score}%</b></span>
+        <!-- AI Safe Route Card -->
+        <div style="background:rgba(16, 185, 129, 0.08);border:1px solid rgba(16, 185, 129, 0.3);border-radius:var(--radius-md);padding:12px">
+          <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:6px">
+            <span style="font-weight:700;color:var(--status-safe);font-size:12px">AI Recommended Safe Path</span>
+            <span class="tag tag-safe" style="font-size:10px">Recommended</span>
+          </div>
+          <div style="font-size:12px;color:var(--text-primary);font-weight:600;margin-bottom:8px;line-height:1.4">${safe.node_names.join(' → ')}</div>
+          <div class="s-card-stats" style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:6px">
+            <div>Dist: <b style="color:var(--text-primary)">${safe.total_distance_km} km</b></div>
+            <div>Time: <b style="color:var(--text-primary)">${safe.total_time_hours}h</b></div>
+            <div>Risk: <b style="color:var(--status-safe)">${safe.avg_risk_score}%</b></div>
           </div>
         </div>
 
-        <!-- Default -->
-        <div style="background:var(--bg-tertiary);border:1px solid var(--border-primary);border-radius:var(--radius-md);padding:12px">
-          <div style="font-weight:600;color:var(--text-tertiary);font-size:11px;margin-bottom:4px">Standard Shortest Path</div>
-          <div style="font-size:11px;color:var(--text-secondary);margin-bottom:6px">${def.node_names.join(' → ')}</div>
-          <div class="s-card-stats">
-            <span>Dist: <b>${def.total_distance_km} km</b></span>
-            <span>Time: <b>${def.total_time_hours}h</b></span>
-            <span style="color:${def.avg_risk_score > 50 ? 'var(--status-danger)' : 'var(--status-warn)'}">Risk: <b>${def.avg_risk_score}%</b></span>
+        <!-- Standard Shortest Path Card -->
+        <div style="background:rgba(249, 115, 22, 0.08);border:1px solid rgba(249, 115, 22, 0.3);border-radius:var(--radius-md);padding:12px">
+          <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:6px">
+            <span style="font-weight:600;color:#f97316;font-size:11px">Standard Shortest Path (Physical Distance)</span>
+            ${def.blocked_segments_count > 0 ? '<span class="tag tag-danger" style="font-size:10px">Blocked Obstacles</span>' : ''}
+          </div>
+          <div style="font-size:11px;color:var(--text-secondary);margin-bottom:8px;line-height:1.4">${def.node_names.join(' → ')}</div>
+          <div class="s-card-stats" style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:6px">
+            <div>Dist: <b style="color:var(--text-primary)">${def.total_distance_km} km</b></div>
+            <div>Time: <b style="color:var(--text-primary)">${def.total_time_hours}h</b></div>
+            <div>Risk: <b style="color:${def.avg_risk_score > 48 ? 'var(--status-danger)' : 'var(--status-warn)'}">${def.avg_risk_score}%</b></div>
           </div>
         </div>
 
-        <!-- Tradeoff -->
+        <!-- Optimization Tradeoff -->
         <div style="background:var(--bg-tertiary);border:1px solid var(--border-primary);border-radius:var(--radius-md);padding:12px;font-size:12px">
-          <div style="font-weight:700;color:var(--text-heading);margin-bottom:6px">Optimization Tradeoff</div>
-          <div style="margin-bottom:3px;color:var(--text-secondary)">Detour Delay: <b style="color:var(--text-heading)">+${c.time_difference_minutes}min</b></div>
-          <div style="margin-bottom:3px;color:var(--text-secondary)">Hazard Reduction: <b style="color:var(--status-safe)">-${c.risk_reduction_percentage}%</b></div>
-          <div style="color:var(--text-secondary)">Blocked Sectors Avoided: <b style="color:var(--status-danger)">${c.blocked_segments_avoided}</b></div>
+          <div style="font-weight:700;color:var(--text-heading);margin-bottom:8px;display:flex;justify-content:space-between">
+            <span>Optimization Tradeoff Analysis</span>
+            <span style="font-size:11px;color:var(--text-tertiary)">Priority: ${priority.replace('_', ' ')}</span>
+          </div>
+          <div style="margin-bottom:4px;color:var(--text-secondary);display:flex;justify-content:space-between">
+            <span>Detour Time Delay:</span>
+            <b style="color:${c.time_difference_minutes > 0 ? 'var(--text-heading)' : 'var(--status-safe)'}">+${c.time_difference_minutes} min</b>
+          </div>
+          <div style="margin-bottom:4px;color:var(--text-secondary);display:flex;justify-content:space-between">
+            <span>Landslide Hazard Reduction:</span>
+            <b style="color:var(--status-safe)">-${c.risk_reduction_percentage}%</b>
+          </div>
+          <div style="color:var(--text-secondary);display:flex;justify-content:space-between">
+            <span>Blocked Choke Points Avoided:</span>
+            <b style="color:${c.blocked_segments_avoided > 0 ? 'var(--status-danger)' : 'var(--text-tertiary)'}">${c.blocked_segments_avoided}</b>
+          </div>
         </div>
       </div>`;
   } catch (err) {
