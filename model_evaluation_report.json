@@ -1,0 +1,127 @@
+{
+  "vulnerability_model": {
+    "dataset_samples": 824,
+    "train_samples": 659,
+    "test_samples": 165,
+    "accuracy": 0.9333333333333333,
+    "macro_f1": 0.9334839073969509,
+    "weighted_f1": 0.9334839073969509,
+    "cv_accuracy_mean": 0.9478196600147818,
+    "cv_accuracy_std": 0.01738525113882906,
+    "per_class": {
+      "Low": {
+        "precision": 0.9818181818181818,
+        "recall": 0.9818181818181818,
+        "f1": 0.9818181818181818,
+        "support": 55
+      },
+      "Medium": {
+        "precision": 0.8666666666666667,
+        "recall": 0.9454545454545454,
+        "f1": 0.9043478260869565,
+        "support": 55
+      },
+      "High": {
+        "precision": 0.96,
+        "recall": 0.8727272727272727,
+        "f1": 0.9142857142857143,
+        "support": 55
+      }
+    },
+    "confusion_matrix": [
+      [
+        54,
+        1,
+        0
+      ],
+      [
+        1,
+        52,
+        2
+      ],
+      [
+        0,
+        7,
+        48
+      ]
+    ],
+    "top_features": [
+      [
+        "slope_deg",
+        0.4468245523838075
+      ],
+      [
+        "distance_km",
+        0.1872957590694386
+      ],
+      [
+        "bridge_T",
+        0.06527823101623421
+      ],
+      [
+        "code",
+        0.062300349129356225
+      ],
+      [
+        "avg_speed_kmh",
+        0.05379341662279878
+      ]
+    ]
+  },
+  "risk_scoring_model": {
+    "dataset_samples": 25,
+    "train_samples": 18,
+    "test_samples": 7,
+    "r2_score": 0.9707873623281678,
+    "mae": 3.132451195714656,
+    "mse": 13.12899401651205,
+    "rmse": 3.623395371266024,
+    "cv_r2_mean": 0.9751442639369395,
+    "cv_r2_std": 0.01736749015534457,
+    "cv_mae_mean": 2.675863869028226,
+    "cv_mae_std": 0.5879610860983774,
+    "feature_importances": {
+      "soil_saturation": 0.4760605265987344,
+      "base_vulnerability": 0.267953419721798,
+      "rainfall_24h_mm": 0.1637072126726782,
+      "slope_deg": 0.08294286287621751,
+      "active_reports_count": 0.009335978130571914
+    }
+  },
+  "graph_isolation_engine": {
+    "graph_nodes": 968,
+    "graph_edges": 840,
+    "is_connected": true,
+    "routes_evaluated": 2,
+    "routing_sample": [
+      {
+        "origin": "guwahati_hub",
+        "destination": "silchar_hub",
+        "ai_path_nodes": 0,
+        "ai_distance_km": 0,
+        "ai_risk_score": 39.1,
+        "default_distance_km": 0,
+        "default_risk_score": 44.7,
+        "risk_reduction_pct": 0
+      },
+      {
+        "origin": "guwahati_hub",
+        "destination": "shillong_hub",
+        "ai_path_nodes": 0,
+        "ai_distance_km": 0,
+        "ai_risk_score": 47.9,
+        "default_distance_km": 0,
+        "default_risk_score": 47.9,
+        "risk_reduction_pct": 0
+      }
+    ],
+    "isolation_summary": {
+      "total_settlements": 968,
+      "isolated_count": 4,
+      "at_risk_count": 282,
+      "total_isolated_population": 13453,
+      "total_at_risk_population": 960902,
+      "severed_corridors_count": 10
+    }
+  }
+}
