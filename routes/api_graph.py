@@ -69,3 +69,67 @@ def get_district_status(district_code):
         'at_risk_settlement_count': at_risk_settlement_count
     })
 
+@api_graph_bp.route('/graph/nodes', methods=['GET'])
+def get_graph_nodes():
+    """Returns list of named nodes (hubs and key towns) for route planner dropdowns."""
+    node_type_filter = request.args.get('type', None)  # e.g. 'supply_hub', 'town'
+    nodes = graph_engine.nodes
+    alias_map = graph_engine.alias_map
+
+    # Build reverse alias map: node_id -> alias
+    reverse_alias = {v: k for k, v in alias_map.items()}
+
+    results = []
+    for n_id, data in nodes.items():
+        if n_id.startswith('_'):
+            continue
+        if node_type_filter and data.get('type') != node_type_filter:
+            continue
+        alias = reverse_alias.get(n_id)
+        results.append({
+            'id': n_id,
+            'alias': alias,
+            'name': data.get('name', n_id),
+            'district': data.get('district', ''),
+            'state': data.get('state', ''),
+            'type': data.get('type', 'junction'),
+            'lat': data.get('lat'),
+            'lon': data.get('lon'),
+            'population': data.get('population', 0),
+            'buffer_days': data.get('buffer_days', 5)
+        })
+
+    # Prioritize supply hubs, then towns by population, then other nodes
+    type_order = {'supply_hub': 0, 'town': 1, 'junction': 2, 'remote_village': 3}
+    results.sort(key=lambda x: (type_order.get(x['type'], 9), -x['population']))
+
+    return jsonify({'status': 'success', 'count': len(results), 'nodes': results})
+
+@api_graph_bp.route('/graph/edges', methods=['GET'])
+def get_graph_edges_list():
+    """Returns list of road edges for field reporting dropdowns."""
+    road_type_filter = request.args.get('road_type', None)  # e.g. 'trunk', 'primary'
+    district_filter = request.args.get('district', None)
+    edges = graph_engine.edges
+
+    results = []
+    for e in edges:
+        if road_type_filter and e.get('road_type') != road_type_filter:
+            continue
+        if district_filter and district_filter.lower() not in e.get('district_context', '').lower():
+            continue
+        results.append({
+            'id': e['id'],
+            'name': e.get('name', e['id']),
+            'road_type': e.get('road_type', 'tertiary'),
+            'district': e.get('district_context', ''),
+            'distance_km': e.get('distance_km', 0),
+            'slope_deg': e.get('slope_deg', 0)
+        })
+
+    # Sort by road importance (trunk > primary > secondary > tertiary) then by distance
+    road_order = {'trunk': 0, 'primary': 1, 'secondary': 2, 'tertiary': 3}
+    results.sort(key=lambda x: (road_order.get(x['road_type'], 9), -x['distance_km']))
+
+    return jsonify({'status': 'success', 'count': len(results), 'edges': results})
+

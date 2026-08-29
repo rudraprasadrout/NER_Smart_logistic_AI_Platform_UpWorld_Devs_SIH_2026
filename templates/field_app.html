@@ -20,18 +20,13 @@
     <form id="incident-form">
       <div class="form-group">
         <label class="form-label">Officer / Unit</label>
-        <input type="text" id="rep-name" class="form-input" placeholder="e.g. Sub-Inspector R. Marak (BRO 758 TF)" required value="Inspector K. Lyngdoh (PWD Jowai)">
+        <input type="text" id="rep-name" class="form-input" placeholder="e.g. Sub-Inspector R. Marak (BRO 758 TF)" required>
       </div>
 
       <div class="form-group">
         <label class="form-label">Affected Road Sector</label>
         <select id="rep-edge-id" class="form-input">
-          <option value="e_lumshnong_sonapur">NH-6 Lumshnong – Sonapur Landslide Zone</option>
-          <option value="e_khliehriat_lumshnong">NH-6 Khliehriat – Lumshnong Canyon</option>
-          <option value="e_shillong_cherra">SH-5 Shillong – Sohra Scenic Highway</option>
-          <option value="e_shillong_mawsynram">Shillong – Mawsynram Hill Arterial</option>
-          <option value="e_nongpoh_shillong">NH-6 Nongpoh – Shillong Ghat Section</option>
-          <option value="e_haflong_silchar">NH-27 Haflong – Silchar Bypass</option>
+          <option value="">Loading road segments...</option>
         </select>
       </div>
 
@@ -60,8 +55,8 @@
       <div class="form-group">
         <label class="form-label">Geo-Coordinates</label>
         <div class="geo-row">
-          <input type="text" id="rep-lat" class="form-input" value="25.1430" placeholder="Latitude">
-          <input type="text" id="rep-lon" class="form-input" value="92.3710" placeholder="Longitude">
+          <input type="text" id="rep-lat" class="form-input" placeholder="Latitude">
+          <input type="text" id="rep-lon" class="form-input" placeholder="Longitude">
           <button type="button" id="btn-geolocate" class="btn btn-ghost" style="white-space:nowrap">GPS Locate</button>
         </div>
       </div>
@@ -100,6 +95,9 @@ document.addEventListener('DOMContentLoaded', () => {
   window.fieldReporter.updateOnlineStatus(navigator.onLine);
   window.fieldReporter.renderQueueList();
 
+  // Dynamically populate the edge dropdown from real dataset
+  loadFieldEdges();
+
   const photoInput = document.getElementById('rep-photo');
   const preview = document.getElementById('photo-preview');
   const previewBox = document.getElementById('photo-preview-container');
@@ -129,6 +127,38 @@ document.addEventListener('DOMContentLoaded', () => {
         err => { alert('Geolocation error: ' + err.message); geoBtn.textContent = 'GPS Locate'; }
       );
     });
+  }
+
+  // Dynamically populate edge dropdown
+  async function loadFieldEdges() {
+    try {
+      const res = await fetch('/api/v1/graph/edges?road_type=trunk');
+      const d = await res.json();
+      const select = document.getElementById('rep-edge-id');
+      select.innerHTML = '';
+
+      if (d.status === 'success' && d.edges) {
+        // Also fetch primary roads
+        const res2 = await fetch('/api/v1/graph/edges?road_type=primary');
+        const d2 = await res2.json();
+        const allEdges = [...d.edges, ...(d2.edges || [])];
+
+        // Sort by distance desc (show major road segments first)
+        allEdges.sort((a, b) => b.distance_km - a.distance_km);
+
+        // Show top 50 most significant road segments
+        allEdges.slice(0, 50).forEach(e => {
+          const label = `${e.name} (${e.district} — ${e.distance_km}km)`;
+          select.add(new Option(label, e.id));
+        });
+      }
+
+      if (select.options.length === 0) {
+        select.add(new Option('No road segments available', ''));
+      }
+    } catch (e) {
+      console.error('Failed to load edge list:', e);
+    }
   }
 
   const form = document.getElementById('incident-form');

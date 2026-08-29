@@ -60,7 +60,15 @@ class IsolationEngine:
                 if not is_hub:
                     isolated_count += 1
                     total_isolated_pop += pop
-                isolation_duration_hrs = 18 if node_id in ['cherrapunjee', 'mawsynram'] else 6
+                # Duration is higher for remote/vulnerable settlements with low supply buffer
+                node_type = data.get('type', 'junction')
+                buffer_d = data.get('buffer_days', 5)
+                if node_type in ('remote_village',) or buffer_d <= 4:
+                    isolation_duration_hrs = 24
+                elif node_type == 'town' and buffer_d <= 6:
+                    isolation_duration_hrs = 18
+                else:
+                    isolation_duration_hrs = 6
                 isolation_reason = 'All arterial road links blocked by severe rainfall/landslides.'
             elif avg_incident_risk >= 45.0 or max_incident_risk >= 60.0:
                 status = 'AT_RISK'

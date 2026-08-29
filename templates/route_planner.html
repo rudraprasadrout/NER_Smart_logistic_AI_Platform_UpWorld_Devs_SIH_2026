@@ -16,25 +16,14 @@
       <div class="form-group" style="margin:0">
         <label class="form-label">Supply Origin</label>
         <select id="route-from-select" class="form-input">
-          <option value="guwahati_hub" selected>Guwahati Central Hub (Assam)</option>
-          <option value="shillong_hub">Shillong District Depot (Meghalaya)</option>
-          <option value="silchar_hub">Silchar Relief Base (Assam)</option>
-          <option value="jowai">Jowai (West Jaintia Hills)</option>
-          <option value="nongpoh">Nongpoh (Ri-Bhoi)</option>
-          <option value="haflong">Haflong (Dima Hasao)</option>
+          <option value="">Loading nodes...</option>
         </select>
       </div>
 
       <div class="form-group" style="margin:0">
         <label class="form-label">Destination</label>
         <select id="route-to-select" class="form-input">
-          <option value="silchar_hub" selected>Silchar Relief Base (Cachar)</option>
-          <option value="cherrapunjee">Cherrapunjee / Sohra</option>
-          <option value="mawsynram">Mawsynram (East Khasi Hills)</option>
-          <option value="shillong_hub">Shillong Depot (Meghalaya)</option>
-          <option value="khliehriat">Khliehriat (East Jaintia Hills)</option>
-          <option value="umrangso">Umrangso (Dima Hasao)</option>
-          <option value="haflong">Haflong (Dima Hasao)</option>
+          <option value="">Loading nodes...</option>
         </select>
       </div>
 
@@ -84,7 +73,38 @@ document.addEventListener('DOMContentLoaded', () => {
     .then(r => r.json())
     .then(d => { if (d.status === 'success') window.mapEngine.renderAccessibilityGraph(d); });
   document.getElementById('btn-calc-route')?.addEventListener('click', calcRoute);
+
+  // Dynamically populate origin/destination dropdowns from real dataset
+  loadRouteNodes();
 });
+
+async function loadRouteNodes() {
+  try {
+    const res = await fetch('/api/v1/graph/nodes');
+    const d = await res.json();
+    if (d.status !== 'success' || !d.nodes) return;
+
+    const fromSel = document.getElementById('route-from-select');
+    const toSel = document.getElementById('route-to-select');
+    fromSel.innerHTML = '';
+    toSel.innerHTML = '';
+
+    // Only show nodes that have an alias (named strategic points)
+    const namedNodes = d.nodes.filter(n => n.alias);
+    // Default selections
+    const defaultFrom = 'guwahati_hub';
+    const defaultTo = 'silchar_hub';
+
+    namedNodes.forEach(n => {
+      const val = n.alias || n.id;
+      const label = `${n.name} (${n.district})`;
+      fromSel.add(new Option(label, val, false, val === defaultFrom));
+      toSel.add(new Option(label, val, false, val === defaultTo));
+    });
+  } catch (e) {
+    console.error('Failed to load route nodes:', e);
+  }
+}
 
 async function calcRoute() {
   const from = document.getElementById('route-from-select').value;
