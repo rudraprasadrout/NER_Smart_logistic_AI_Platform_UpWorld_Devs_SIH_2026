@@ -54,31 +54,34 @@ def init_db():
     # Seed initial emergency alerts if empty
     cursor.execute('SELECT COUNT(*) FROM alerts')
     if cursor.fetchone()[0] == 0:
+        # Use real edge IDs from the dataset (highest-risk trunk roads)
+        # osm_edge_0021: NH6 East Jaintia Hills (slope=22.3°, highly vulnerable)
+        # osm_edge_0701: NH627 Dima Hasao (slope=14.5°, long dangerous corridor)
         seed_alerts = [
             (
                 str(uuid.uuid4()),
                 'ROAD_BLOCKED',
                 'CRITICAL',
-                'e_lumshnong_sonapur',
-                'NH-6 Lumshnong-Sonapur Sector Blocked by Massive Landslide',
-                'NH-6 লুমশনং-সোনাপুৰ অংশত প্ৰচণ্ড ভূমিস্খলনৰ বাবে পথ বন্ধ',
-                'NH-6 लुमशनॉन्ग-सोनापुर खंड भारी भूस्खलन के कारण पूरी तरह बंद',
-                'NH-6 লুমশনং-সোনাপুর সেকশন ভারী ভূমিধসের কারণে সম্পূর্ণ বন্ধ',
-                'Heavy debris flow at Sonapur bottleneck. All vehicular traffic to Silchar/Barak Valley halted. Rerouting via Haflong recommended.',
-                'সোনাপুৰত বৃহৎ ভূমিস্খলন। শিলচৰ/বৰাক উপত্যকালৈ যান-বাহন চলাচল বন্ধ। হাফলং হৈ বিকল্প পথ ব্যৱহাৰ কৰক।',
-                'सोनापुर में भारी मलबा जमा होने से सिलचर/बराक घाटी का यातायात बाधित है। हाफलोंग वैकल्पिक मार्ग का उपयोग करें।',
-                'সোনাপুরে ভারী ধ্বংসস্তূপ জমে শিলচর/বরাক উপত্যকা যোগাযোগ বিচ্ছিন্ন। হাফলং বিকল্প রুট ব্যবহারের পরামর্শ দেওয়া হচ্ছে।',
+                'osm_edge_0021',
+                'NH-6 East Jaintia Hills Sector Blocked by Massive Landslide',
+                'NH-6 পূব জয়ন্তীয়া পাহাৰ অংশত প্ৰচণ্ড ভূমিস্খলনৰ বাবে পথ বন্ধ',
+                'NH-6 पूर्व जयंतिया हिल्स खंड भारी भूस्खलन के कारण पूरी तरह बंद',
+                'NH-6 পূর্ব জয়ন্তিয়া হিলস সেকশন ভারী ভূমিধসের কারণে সম্পূর্ণ বন্ধ',
+                'Heavy debris flow on NH-6 near Jaintia Hills corridor. All vehicular traffic to Barak Valley halted. Rerouting via Dima Hasao recommended.',
+                'জয়ন্তীয়া পাহাৰত বৃহৎ ভূমিস্খলন। বৰাক উপত্যকালৈ যান-বাহন চলাচল বন্ধ। ডিমা হাছাও হৈ বিকল্প পথ ব্যৱহাৰ কৰক।',
+                'जयंतिया हिल्स में भारी मलबा जमा होने से बराक घाटी का यातायात बाधित है। डिमा हसाओ वैकल्पिक मार्ग का उपयोग करें।',
+                'জয়ন্তিয়া হিলসে ভারী ধ্বংসস্তূপ জমে বরাক উপত্যকা যোগাযোগ বিচ্ছিন্ন। ডিমা হাসাও বিকল্প রুট ব্যবহারের পরামর্শ দেওয়া হচ্ছে।',
                 datetime.datetime.now(datetime.timezone.utc).isoformat()
             ),
             (
                 str(uuid.uuid4()),
                 'ISOLATION_WARNING',
                 'HIGH',
-                'e_shillong_cherra',
-                'Cherrapunjee & Mawsynram Spurs at Imminent Cut-off Risk',
-                'চেৰাপুঞ্জী আৰু মৌচিনৰাম পথ বিচ্ছিন্ন হোৱাৰ প্ৰবল সম্ভাৱনা',
-                'चेरापूंजी और मौसिनराम संपर्क मार्ग कटने के कगार पर',
-                'চেরাপুঞ্জি ও মৌসিনরাম সংযোগ সড়ক বিচ্ছিন্ন হওয়ার ঝুঁকিতে',
+                'osm_edge_0701',
+                'NH-627 Dima Hasao Corridor at Imminent Cut-off Risk',
+                'NH-627 ডিমা হাছাও পথ বিচ্ছিন্ন হোৱাৰ প্ৰবল সম্ভাৱনা',
+                'NH-627 डिमा हसाओ संपर्क मार्ग कटने के कगार पर',
+                'NH-627 ডিমা হাসাও সংযোগ সড়ক বিচ্ছিন্ন হওয়ার ঝুঁকিতে',
                 'Precipitation exceeded 85mm. Soil saturation index critical (88%). Essential supply convoys advised immediate transit before dusk.',
                 'বৃষ্টিপাত ৮৫ মিমি অতিক্ৰম কৰিলে। মাটিৰ জলপৃক্ততা সংকটজনক (৮৮%)। অত্যাৱশ্যকীয় যোগান তৎকালে স্থানান্তৰ কৰক।',
                 'वर्षा 85 मिमी से अधिक हुई। मिट्टी की जल-संतृप्ति 88% पहुंची। आवश्यक सामग्री जल्द से जल्द सुरक्षित क्षेत्रों में पहुंचाएं।',

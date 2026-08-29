@@ -135,7 +135,9 @@ def load_edges():
             coord_to_node[(round(n_data['lon'], 7), round(n_data['lat'], 7))] = n_id
 
     with open(edges_file, mode='r', encoding='utf-8') as f:
-        reader = csv.DictReader(f)
+        # Skip leading blank lines (some CSVs have \r\n before header)
+        lines = [line for line in f if line.strip()]
+        reader = csv.DictReader(lines)
         for idx, row in enumerate(reader):
             edge_id = row.get('edge_id') or row.get('id') or f'osm_edge_{idx+1:04d}'
             u_str = row.get('u', '')
