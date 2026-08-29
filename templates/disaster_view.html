@@ -1,38 +1,386 @@
 {% extends "base.html" %}
 
-{% block title %}Emergency Mode — PathNER{% endblock %}
+{% block title %}Emergency Tactical Operations — PathNER{% endblock %}
 
 {% block content %}
-<div style="padding:16px 20px;display:flex;flex-direction:column;gap:12px;height:calc(100vh - 52px - 28px)">
+<style>
+  /* ---------------------------------------------------------------
+     Field Command Console — local tokens (built on top of base vars)
+     --------------------------------------------------------------- */
+  .ec-page {
+    --ec-mono: ui-monospace, "SF Mono", "Cascadia Code", Consolas, monospace;
+    --ec-line: color-mix(in srgb, var(--border-primary) 70%, transparent);
+    --ec-danger: var(--status-danger, #e5484d);
+    --ec-warn: var(--status-warn, #f5a623);
+    --ec-ok: var(--accent);
+    display: flex;
+    flex-direction: column;
+    gap: 14px;
+  }
 
-  <!-- Alert Banner -->
-  <div style="background:var(--status-critical-muted);border:2px solid var(--status-critical-border);border-radius:var(--radius-md);padding:12px 20px;display:flex;align-items:center;justify-content:space-between;flex-shrink:0">
-    <div>
-      <div style="font-weight:900;font-size:15px;color:var(--status-danger);letter-spacing:-0.3px">DISASTER RESPONSE MODE</div>
-      <div style="font-size:12px;color:var(--text-secondary);margin-top:2px">
-        High-contrast view of severed arteries, critical convoys, and stranded settlements.
+  /* Contour-line texture, nodding to the hill terrain these roads cross */
+  .ec-contours {
+    position: absolute;
+    inset: 0;
+    opacity: 0.05;
+    pointer-events: none;
+    background-image:
+      repeating-radial-gradient(circle at 15% 20%, transparent 0 18px, var(--ec-line) 18px 19px, transparent 19px 40px),
+      repeating-radial-gradient(circle at 85% 75%, transparent 0 24px, var(--ec-line) 24px 25px, transparent 25px 52px);
+  }
+
+  /* ---- Status strip ---- */
+  .ec-statusbar {
+    position: relative;
+    overflow: hidden;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 16px;
+    padding: 12px 18px;
+    border: 1px solid var(--ec-line);
+    border-left: 3px solid var(--ec-danger);
+    border-radius: 10px;
+    background: var(--bg-secondary);
+  }
+  .ec-statusbar-left { display: flex; align-items: center; gap: 12px; min-width: 0; }
+  .ec-pulse {
+    width: 9px; height: 9px; border-radius: 50%;
+    background: var(--ec-danger);
+    box-shadow: 0 0 0 0 color-mix(in srgb, var(--ec-danger) 60%, transparent);
+    animation: ec-pulse 2s ease-out infinite;
+    flex-shrink: 0;
+  }
+  @keyframes ec-pulse {
+    0%   { box-shadow: 0 0 0 0 color-mix(in srgb, var(--ec-danger) 55%, transparent); }
+    70%  { box-shadow: 0 0 0 9px transparent; }
+    100% { box-shadow: 0 0 0 0 transparent; }
+  }
+  .ec-status-text { display: flex; flex-direction: column; gap: 2px; min-width: 0; }
+  .ec-status-kicker {
+    font-family: var(--ec-mono);
+    font-size: 10px;
+    font-weight: 700;
+    letter-spacing: 1.4px;
+    color: var(--ec-danger);
+    text-transform: uppercase;
+  }
+  .ec-status-desc {
+    font-size: 12px;
+    color: var(--text-secondary);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+  .ec-dispatch-btn {
+    display: flex;
+    align-items: center;
+    gap: 7px;
+    flex-shrink: 0;
+    font-size: 12px;
+    font-weight: 700;
+    padding: 9px 16px;
+    border-radius: 8px;
+    background: var(--ec-danger);
+    color: #fff;
+    text-decoration: none;
+    letter-spacing: 0.2px;
+  }
+  .ec-dispatch-btn:hover { filter: brightness(1.08); }
+
+  /* ---- Grid ---- */
+  .ec-grid {
+    display: grid;
+    grid-template-columns: 380px 1fr;
+    gap: 14px;
+    min-height: 0;
+    flex: 1;
+  }
+  @media (max-width: 900px) {
+    .ec-grid { grid-template-columns: 1fr; }
+  }
+  .ec-sidebar { display: flex; flex-direction: column; gap: 14px; min-height: 0; }
+
+  /* ---- Advisory panel ---- */
+  .ec-panel {
+    border: 1px solid var(--ec-line);
+    border-radius: 10px;
+    background: var(--bg-secondary);
+    overflow: hidden;
+  }
+  .ec-panel-head {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 10px;
+    padding: 11px 14px;
+    border-bottom: 1px solid var(--ec-line);
+  }
+  .ec-panel-title {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-family: var(--ec-mono);
+    font-size: 11px;
+    font-weight: 700;
+    letter-spacing: 0.8px;
+    text-transform: uppercase;
+    color: var(--text-heading);
+  }
+  .ec-tabs {
+    display: flex;
+    gap: 2px;
+    background: var(--bg-tertiary);
+    border-radius: 7px;
+    padding: 2px;
+  }
+  .ec-tab {
+    border: none;
+    background: transparent;
+    font-family: var(--ec-mono);
+    font-size: 10.5px;
+    font-weight: 700;
+    padding: 4px 9px;
+    border-radius: 5px;
+    color: var(--text-tertiary);
+    cursor: pointer;
+  }
+  .ec-tab.active { background: var(--bg-card); color: var(--text-heading); }
+
+  .ec-advisory-body {
+    padding: 13px 14px;
+    max-height: 260px;
+    overflow-y: auto;
+    transition: opacity 0.15s ease;
+  }
+  .ec-adv-heading {
+    font-family: var(--ec-mono);
+    font-weight: 800;
+    font-size: 11px;
+    color: var(--ec-ok);
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    margin: 10px 0 5px;
+  }
+  .ec-adv-heading:first-child { margin-top: 0; }
+  .ec-adv-step {
+    display: flex;
+    gap: 9px;
+    align-items: flex-start;
+    margin: 9px 0 4px;
+  }
+  .ec-adv-step-num {
+    font-family: var(--ec-mono);
+    background: var(--ec-ok);
+    color: #fff;
+    font-weight: 800;
+    font-size: 10px;
+    padding: 1px 6px;
+    border-radius: 4px;
+    flex-shrink: 0;
+    margin-top: 1px;
+  }
+  .ec-adv-step-body { font-size: 12px; font-weight: 600; color: var(--text-heading); line-height: 1.4; }
+  .ec-adv-bullet {
+    margin-left: 21px;
+    font-size: 11.5px;
+    color: var(--text-secondary);
+    line-height: 1.5;
+    margin-bottom: 3px;
+  }
+  .ec-adv-text { font-size: 11.5px; color: var(--text-secondary); line-height: 1.5; margin-bottom: 4px; }
+
+  /* ---- Severed settlements panel ---- */
+  .ec-severed-count {
+    font-family: var(--ec-mono);
+    font-weight: 800;
+    font-size: 11px;
+    color: var(--ec-danger);
+    background: color-mix(in srgb, var(--ec-danger) 14%, transparent);
+    padding: 1px 7px;
+    border-radius: 5px;
+  }
+  .ec-severed-list {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    padding: 10px;
+    overflow-y: auto;
+    max-height: 480px;
+  }
+  .ec-empty-note {
+    text-align: center;
+    color: var(--text-tertiary);
+    padding: 26px 10px;
+    font-family: var(--ec-mono);
+    font-size: 11px;
+    letter-spacing: 0.3px;
+  }
+
+  .ec-scard {
+    border: 1px solid var(--ec-line);
+    border-left: 3px solid var(--ec-warn);
+    border-radius: 8px;
+    padding: 10px 12px;
+    background: var(--bg-tertiary);
+    cursor: pointer;
+    transition: border-color 0.12s ease, transform 0.12s ease;
+  }
+  .ec-scard:hover { transform: translateX(1px); }
+  .ec-scard.ec-isolated { border-left-color: var(--ec-danger); }
+
+  .ec-scard-top {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 8px;
+    margin-bottom: 3px;
+  }
+  .ec-scard-name { font-size: 13px; font-weight: 800; color: var(--text-heading); }
+  .ec-pill {
+    font-family: var(--ec-mono);
+    font-size: 9px;
+    font-weight: 800;
+    letter-spacing: 0.4px;
+    padding: 2px 6px;
+    border-radius: 4px;
+    flex-shrink: 0;
+  }
+  .ec-pill.ec-danger { background: color-mix(in srgb, var(--ec-danger) 18%, transparent); color: var(--ec-danger); }
+  .ec-pill.ec-warn { background: color-mix(in srgb, var(--ec-warn) 20%, transparent); color: var(--ec-warn); }
+
+  .ec-scard-loc {
+    font-family: var(--ec-mono);
+    font-size: 10px;
+    color: var(--text-tertiary);
+    margin-bottom: 8px;
+    letter-spacing: 0.2px;
+  }
+
+  .ec-scard-stats { display: flex; justify-content: space-between; align-items: center; margin-bottom: 7px; gap: 10px; }
+  .ec-scard-pop { font-size: 11px; color: var(--text-secondary); }
+  .ec-scard-pop b { color: var(--text-heading); }
+
+  /* Buffer-days urgency bar: the supply clock, visualized */
+  .ec-buffer { display: flex; flex-direction: column; align-items: flex-end; gap: 3px; min-width: 70px; }
+  .ec-buffer-label { font-family: var(--ec-mono); font-size: 9.5px; color: var(--text-tertiary); }
+  .ec-buffer-track { width: 70px; height: 5px; border-radius: 3px; background: var(--bg-card); overflow: hidden; }
+  .ec-buffer-fill { height: 100%; border-radius: 3px; }
+
+  .ec-scard-reason {
+    font-size: 10.5px;
+    color: var(--text-secondary);
+    background: var(--bg-card);
+    padding: 6px 8px;
+    border-radius: 6px;
+    border-left: 2px solid var(--ec-line);
+    margin-bottom: 8px;
+    line-height: 1.4;
+  }
+
+  .ec-scard-actions { display: flex; justify-content: flex-end; }
+  .ec-relief-btn {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+    font-size: 10.5px;
+    font-weight: 800;
+    padding: 4px 10px;
+    border-radius: 6px;
+    background: var(--ec-ok);
+    color: #fff;
+    text-decoration: none;
+  }
+
+  /* ---- Map panel ---- */
+  .ec-map-panel {
+    position: relative;
+    border: 1px solid var(--ec-line);
+    border-radius: 10px;
+    overflow: hidden;
+    background: var(--bg-secondary);
+    min-height: 420px;
+  }
+  .ec-map-tag {
+    position: absolute;
+    top: 12px;
+    left: 12px;
+    z-index: 500;
+    font-family: var(--ec-mono);
+    font-size: 10px;
+    font-weight: 700;
+    letter-spacing: 0.6px;
+    text-transform: uppercase;
+    color: var(--text-heading);
+    background: color-mix(in srgb, var(--bg-secondary) 88%, transparent);
+    border: 1px solid var(--ec-line);
+    padding: 5px 10px;
+    border-radius: 6px;
+    backdrop-filter: blur(3px);
+  }
+  #map-container { height: 100%; width: 100%; }
+</style>
+
+<div class="ec-page">
+
+  <!-- Status strip -->
+  <div class="ec-statusbar">
+    <div class="ec-contours"></div>
+    <div class="ec-statusbar-left">
+      <div class="ec-pulse"></div>
+      <div class="ec-status-text">
+        <span class="ec-status-kicker">Operations Status — Live</span>
+        <span class="ec-status-desc">Monitoring severed arterial passes &amp; critical food/medicine relief priorities</span>
       </div>
     </div>
-    <a href="{{ url_for('route_planner') }}" class="btn btn-danger">Plan Relief Convoy</a>
+    <a href="{{ url_for('route_planner') }}" class="ec-dispatch-btn">
+      <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="6" cy="19" r="3"/><path d="M9 19h8.5a3.5 3.5 0 0 0 0-7h-11a3.5 3.5 0 0 1 0-7H15"/><circle cx="18" cy="5" r="3"/></svg>
+      <span>Open Route Dispatcher</span>
+    </a>
   </div>
 
-  <!-- Grid: settlements + map -->
-  <div style="display:grid;grid-template-columns:380px 1fr;gap:12px;flex:1;min-height:0">
+  <div class="ec-grid">
 
-    <!-- Severed Settlements -->
-    <div style="background:var(--bg-card);border:1px solid var(--status-critical-border);border-radius:var(--radius-lg);overflow:hidden;display:flex;flex-direction:column">
-      <div class="panel-head" style="background:var(--status-critical-muted)">
-        <span class="panel-head-title" style="color:var(--status-danger)">Severed Settlements (<span id="disaster-iso-count">0</span>)</span>
-        <span class="tag tag-danger">Urgent</span>
+    <!-- Left: advisory + severed settlements -->
+    <div class="ec-sidebar">
+
+      <div class="ec-panel">
+        <div class="ec-panel-head">
+          <div class="ec-panel-title">
+            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2v20M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg>
+            <span>Logistics Advisory</span>
+          </div>
+          <div class="ec-tabs">
+            <button class="ec-tab ai-lang-btn active" data-lang="en">EN</button>
+            <button class="ec-tab ai-lang-btn" data-lang="as">অসমীয়া</button>
+            <button class="ec-tab ai-lang-btn" data-lang="bn">বাংলা</button>
+            <button class="ec-tab ai-lang-btn" data-lang="hi">हिन्दी</button>
+          </div>
+        </div>
+        <div id="ai-advisory-content" class="ec-advisory-body">
+          <div class="ec-adv-text">Evaluating real-time geological slope, rainfall saturation &amp; primary highway continuity...</div>
+        </div>
       </div>
-      <div style="flex:1;overflow-y:auto;padding:12px" id="disaster-settlements-list">
-        <div style="text-align:center;color:var(--text-tertiary);padding:24px;font-size:12px">Scanning corridors...</div>
+
+      <div class="ec-panel" style="display:flex;flex-direction:column;min-height:0;flex:1">
+        <div class="ec-panel-head">
+          <div class="ec-panel-title" style="color:var(--ec-danger)">
+            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="m21.73 18-8-14a2 2 0 0 0-3.48 0l-8 14A2 2 0 0 0 4 21h16a2 2 0 0 0 1.73-3Z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>
+            <span>Severed Settlements</span>
+            <span class="ec-severed-count" id="disaster-iso-count">0</span>
+          </div>
+        </div>
+        <div class="ec-severed-list" id="disaster-settlements-list">
+          <div class="ec-empty-note">Scanning arterial corridors...</div>
+        </div>
       </div>
+
     </div>
 
-    <!-- Map -->
-    <div style="background:var(--bg-card);border:1px solid var(--border-primary);border-radius:var(--radius-lg);overflow:hidden;position:relative">
-      <div id="map-container" style="height:100%"></div>
+    <!-- Right: map -->
+    <div class="ec-map-panel">
+      <span class="ec-map-tag">Accessibility Graph</span>
+      <div id="map-container"></div>
     </div>
 
   </div>
@@ -53,7 +401,9 @@ document.addEventListener('DOMContentLoaded', async () => {
     const graphData = await graphRes.json();
     const isoData = await isoRes.json();
 
-    if (graphData.status === 'success') window.mapEngine.renderAccessibilityGraph(graphData);
+    if (graphData.status === 'success') {
+      window.mapEngine.renderAccessibilityGraph(graphData);
+    }
 
     if (isoData.status === 'success') {
       const list = document.getElementById('disaster-settlements-list');
@@ -61,34 +411,133 @@ document.addEventListener('DOMContentLoaded', async () => {
       const items = isoData.settlements.filter(s => !s.is_hub && (s.status === 'ISOLATED' || s.status === 'AT_RISK'));
       if (countEl) countEl.textContent = items.length;
 
-      list.innerHTML = items.map(s => {
-        const cls = s.status === 'ISOLATED' ? 's-isolated' : 's-at-risk';
-        const tagCls = s.status === 'ISOLATED' ? 'tag-danger' : 'tag-warn';
-        return `
-          <div class="s-card ${cls}" data-lat="${s.lat}" data-lon="${s.lon}">
-            <div class="s-card-top">
-              <span class="s-card-name" style="font-size:14px">${s.name}</span>
-              <span class="tag ${tagCls}">${s.status}</span>
-            </div>
-            <div class="s-card-stats" style="margin-top:4px">
-              <span>Affected: <b>${s.population.toLocaleString()}</b></span>
-              <span style="color:var(--status-danger)">Buffer: <b>${s.buffer_days}d</b></span>
-            </div>
-            <div class="s-card-reason">${s.isolation_reason}</div>
-            <div style="margin-top:6px;display:flex;justify-content:flex-end">
-              <a href="/routes?to=${s.node_id}" class="btn btn-accent" style="font-size:11px;padding:4px 10px">Route Relief &rarr;</a>
-            </div>
-          </div>`;
-      }).join('');
+      if (items.length === 0) {
+        list.innerHTML = '<div class="ec-empty-note">No severed settlements detected.</div>';
+      } else {
+        list.innerHTML = items.map(s => {
+          const isIsolated = s.status === 'ISOLATED';
+          const cardCls = isIsolated ? 'ec-isolated' : '';
+          const pillCls = isIsolated ? 'ec-danger' : 'ec-warn';
+          const bufferColor = s.buffer_days <= 2 ? 'var(--ec-danger)' : (s.buffer_days <= 5 ? 'var(--ec-warn)' : 'var(--ec-ok)');
+          const bufferPct = Math.max(6, Math.min(100, (s.buffer_days / 10) * 100));
+          return `
+            <div class="ec-scard ${cardCls}" data-lat="${s.lat}" data-lon="${s.lon}">
+              <div class="ec-scard-top">
+                <span class="ec-scard-name">${s.name}</span>
+                <span class="ec-pill ${pillCls}">${s.status}</span>
+              </div>
+              <div class="ec-scard-loc">${s.district}, ${s.state}</div>
+              <div class="ec-scard-stats">
+                <div class="ec-scard-pop">Pop. <b>${s.population.toLocaleString()}</b></div>
+                <div class="ec-buffer">
+                  <span class="ec-buffer-label">${s.buffer_days}d supply buffer</span>
+                  <div class="ec-buffer-track"><div class="ec-buffer-fill" style="width:${bufferPct}%;background:${bufferColor}"></div></div>
+                </div>
+              </div>
+              <div class="ec-scard-reason">${s.isolation_reason}</div>
+              <div class="ec-scard-actions">
+                <a href="/routes?to=${s.id || s.node_id}" class="ec-relief-btn">
+                  <span>Dispatch Relief</span>
+                  <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14"/><path d="m12 5 7 7-7 7"/></svg>
+                </a>
+              </div>
+            </div>`;
+        }).join('');
+      }
 
-      list.querySelectorAll('.s-card').forEach(card => {
+      list.querySelectorAll('.ec-scard').forEach(card => {
         card.addEventListener('click', e => {
-          if (e.target.tagName === 'A') return;
+          if (e.target.closest('a')) return;
           window.mapEngine?.zoomToNode(+card.dataset.lat, +card.dataset.lon);
         });
       });
     }
+
+    // Load AI Tactical Advisory
+    loadAiAdvisory('en');
+
+    document.querySelectorAll('.ai-lang-btn').forEach(btn => {
+      btn.addEventListener('click', () => {
+        document.querySelectorAll('.ai-lang-btn').forEach(b => b.classList.remove('active'));
+        btn.classList.add('active');
+        loadAiAdvisory(btn.dataset.lang);
+      });
+    });
+
   } catch (err) { console.error('Disaster view error:', err); }
 });
+
+async function loadAiAdvisory(lang = 'en') {
+  const box = document.getElementById('ai-advisory-content');
+  if (!box) return;
+
+  // Check browser session cache first to save API credits & avoid repeated network requests
+  const cacheKey = 'pathner_ai_advisory_' + lang;
+  const cached = sessionStorage.getItem(cacheKey);
+  if (cached) {
+    box.innerHTML = renderMarkdownAdvisory(cached);
+    return;
+  }
+
+  box.style.opacity = '0.5';
+  try {
+    const res = await fetch(`/api/v1/ai/advisory?lang=${lang}`);
+    const data = await res.json();
+    if (data.status === 'success') {
+      sessionStorage.setItem(cacheKey, data.advisory);
+      box.innerHTML = renderMarkdownAdvisory(data.advisory);
+    }
+  } catch (e) {
+    box.innerHTML = '<div class="ec-adv-text">Tactical advisory offline.</div>';
+  } finally {
+    box.style.opacity = '1';
+  }
+}
+
+function renderMarkdownAdvisory(raw) {
+  if (!raw) return '';
+
+  // Clean raw markdown syntax into elegant HTML using the console's own classes
+  let lines = raw.split('\n');
+  let html = '';
+
+  for (let line of lines) {
+    line = line.trim();
+    if (!line || line.startsWith('---')) continue;
+
+    // Header styling
+    if (line.startsWith('###') || line.startsWith('##') || line.startsWith('#')) {
+      const text = line.replace(/^[#\s]+/, '').replace(/\*\*/g, '');
+      html += `<div class="ec-adv-heading">${text}</div>`;
+      continue;
+    }
+
+    // Numbered Action Items (e.g. 1. REOPEN PRIMARY CORRIDORS)
+    const matchNum = line.match(/^(\d+)\.\s+(.*)/);
+    if (matchNum) {
+      const num = matchNum[1];
+      let body = matchNum[2].replace(/\*\*(.*?)\*\*/g, '<b>$1</b>');
+      html += `
+        <div class="ec-adv-step">
+          <span class="ec-adv-step-num">${num}</span>
+          <div class="ec-adv-step-body">${body}</div>
+        </div>`;
+      continue;
+    }
+
+    // Bullet Items (e.g. - Action: Deploy BRO...)
+    if (line.startsWith('-') || line.startsWith('*')) {
+      let body = line.replace(/^[-*]\s+/, '').replace(/\*\*(.*?)\*\*/g, '<b>$1</b>');
+      html += `<div class="ec-adv-bullet">• ${body}</div>`;
+      continue;
+    }
+
+    // General text
+    let clean = line.replace(/\*\*(.*?)\*\*/g, '<b>$1</b>');
+    html += `<div class="ec-adv-text">${clean}</div>`;
+  }
+
+  return html;
+}
 </script>
 {% endblock %}

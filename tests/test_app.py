@@ -103,6 +103,52 @@ class PathNERTestCase(unittest.TestCase):
         data = res.get_json()
         self.assertIn(data['status'], ['success', 'already_synced'])
 
+    def test_api_ai_advisory(self):
+        for lang in ['en', 'as', 'hi', 'bn']:
+            res = self.client.get(f'/api/v1/ai/advisory?lang={lang}')
+            self.assertEqual(res.status_code, 200)
+            data = res.get_json()
+            self.assertEqual(data['status'], 'success')
+            self.assertEqual(data['language'], lang)
+            self.assertIn('advisory', data)
+            self.assertTrue(len(data['advisory']) > 0)
+
+    def test_api_ai_chat(self):
+        # Test query to chatbot in 4 languages
+        for lang in ['en', 'as', 'bn', 'hi']:
+            res = self.client.post('/api/v1/ai/chat', json={
+                'message': 'NH-6 status',
+                'chat_history': [],
+                'language': lang
+            })
+            self.assertEqual(res.status_code, 200)
+            data = res.get_json()
+            self.assertEqual(data['status'], 'success')
+            self.assertEqual(data['language'], lang)
+            self.assertIn('reply', data)
+            self.assertTrue(len(data['reply']) > 0)
+
+
+    def test_pkl_model_loading(self):
+        import os
+        import joblib
+        from models.risk_model import risk_model
+        
+        self.assertTrue(os.path.exists('models/risk_model.pkl'))
+        self.assertTrue(risk_model.is_trained)
+        
+        # Test ML risk evaluation with test edge
+        test_edge = {
+            'slope_deg': 24.5,
+            'base_vulnerability': 0.75,
+            'soil_factor': 0.85
+        }
+        test_weather = {'current_rainfall_mm': 65.0, 'soil_saturation_index': 0.88}
+        eval_res = risk_model.calculate_risk(test_edge, test_weather)
+        self.assertIn('risk_score', eval_res)
+        self.assertGreater(eval_res['risk_score'], 0)
+        self.assertLessEqual(eval_res['risk_score'], 100)
+
 if __name__ == '__main__':
     unittest.main()
 

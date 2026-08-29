@@ -2,12 +2,22 @@ import networkx as nx
 from .graph_engine import graph_engine
 
 class IsolationEngine:
+    _cache = {}
+
+    @classmethod
+    def clear_cache(cls):
+        cls._cache.clear()
+
     @staticmethod
     def compute_isolation_index(horizon=None):
         """
         Computes multi-hop reachability from supply hubs to every settlement.
         Returns isolation status, affected populations, and vulnerability rankings.
         """
+        cache_key = str(horizon)
+        if cache_key in IsolationEngine._cache:
+            return IsolationEngine._cache[cache_key]
+
         # Ensure graph is evaluated for current horizon
         graph_engine.rebuild_graph(horizon=horizon)
         G = graph_engine.graph
@@ -43,18 +53,36 @@ class IsolationEngine:
         isolated_count = 0
         at_risk_count = 0
 
+        # Evaluate district-level arterial passable status
+        district_corridor_status = {}
+        for edge in G.edges(data=True):
+            d_ctx = edge[2].get('district_context', 'East Khasi Hills')
+            if d_ctx not in district_corridor_status:
+                district_corridor_status[d_ctx] = {'blocked': 0, 'total': 0, 'max_risk': 0.0}
+            district_corridor_status[d_ctx]['total'] += 1
+            if edge[2].get('is_blocked'):
+                district_corridor_status[d_ctx]['blocked'] += 1
+            if edge[2].get('risk_score', 0) > district_corridor_status[d_ctx]['max_risk']:
+                district_corridor_status[d_ctx]['max_risk'] = edge[2].get('risk_score', 0)
+
         for node_id, data in nodes.items():
             # Hubs themselves are not counted as isolated settlements
             is_hub = data['type'] == 'supply_hub'
             pop = data['population']
+            district = data.get('district', 'East Khasi Hills')
+            d_stat = district_corridor_status.get(district, {'blocked': 0, 'total': 1, 'max_risk': 20.0})
             
             # Check edge risks directly connected to this node in full G
             incident_edges = list(G.edges(node_id, data=True))
-            max_incident_risk = max([e[2]['risk_score'] for e in incident_edges]) if incident_edges else 0.0
-            avg_incident_risk = sum([e[2]['risk_score'] for e in incident_edges]) / max(1, len(incident_edges)) if incident_edges else 0.0
+            max_incident_risk = max([e[2]['risk_score'] for e in incident_edges]) if incident_edges else d_stat['max_risk']
+            avg_incident_risk = sum([e[2]['risk_score'] for e in incident_edges]) / max(1, len(incident_edges)) if incident_edges else d_stat['max_risk']
             all_incident_blocked = all([e[2]['is_blocked'] for e in incident_edges]) if incident_edges else False
 
-            if node_id not in reachable_from_hubs or all_incident_blocked:
+            # Is node directly reachable via graph BFS or via passable district corridor
+            is_bfs_reachable = node_id in reachable_from_hubs
+            district_artery_blocked = d_stat['blocked'] > 0 and (d_stat['blocked'] / max(1, d_stat['total'])) >= 0.5
+
+            if all_incident_blocked or (not is_bfs_reachable and district_artery_blocked):
                 status = 'ISOLATED'
                 color = '#ef4444' # Red
                 if not is_hub:
@@ -70,7 +98,7 @@ class IsolationEngine:
                 else:
                     isolation_duration_hrs = 6
                 isolation_reason = 'All arterial road links blocked by severe rainfall/landslides.'
-            elif avg_incident_risk >= 45.0 or max_incident_risk >= 60.0:
+            elif max_incident_risk >= 50.0 or avg_incident_risk >= 40.0:
                 status = 'AT_RISK'
                 color = '#f59e0b' # Amber
                 if not is_hub:
@@ -108,7 +136,7 @@ class IsolationEngine:
         order = {'ISOLATED': 0, 'AT_RISK': 1, 'REACHABLE': 2}
         settlement_results.sort(key=lambda x: (order.get(x['status'], 3), -x['population']))
 
-        return {
+        result = {
             'horizon': horizon or 'current',
             'summary': {
                 'total_settlements': len(nodes),
@@ -120,3 +148,5 @@ class IsolationEngine:
             },
             'settlements': settlement_results
         }
+        IsolationEngine._cache[cache_key] = result
+        return result

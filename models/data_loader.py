@@ -41,21 +41,22 @@ def _parse_coordinate_pair(s):
     return None
 
 # Landmark coordinates for regional logistics hubs and strategic choke points
+# Landmark coordinates for regional logistics hubs and strategic choke points
 LANDMARK_COORDS = {
-    'guwahati_hub': {'name': 'Guwahati Central Logistics Hub', 'lat': 25.9666, 'lon': 91.9915, 'type': 'supply_hub', 'pop': 95000, 'buffer': 14},
-    'nongpoh': {'name': 'Nongpoh Transit Depot', 'lat': 25.9059, 'lon': 91.9915, 'type': 'town', 'pop': 28000, 'buffer': 8},
-    'shillong_hub': {'name': 'Shillong District Logistics Depot', 'lat': 25.5858, 'lon': 91.9915, 'type': 'supply_hub', 'pop': 143000, 'buffer': 12},
-    'cherrapunjee': {'name': 'Cherrapunjee (Sohra) Relief Post', 'lat': 25.2067, 'lon': 91.9915, 'type': 'town', 'pop': 12500, 'buffer': 5},
-    'mawsynram': {'name': 'Mawsynram Forward Post', 'lat': 25.1845, 'lon': 92.0259, 'type': 'remote_village', 'pop': 6800, 'buffer': 4},
-    'jowai': {'name': 'Jowai District Supply Depot', 'lat': 25.4502, 'lon': 92.1975, 'type': 'town', 'pop': 38500, 'buffer': 9},
+    'guwahati_hub': {'name': 'Guwahati Central Logistics Hub', 'lat': 26.1158, 'lon': 91.8150, 'type': 'supply_hub', 'pop': 95000, 'buffer': 14},
+    'nongpoh': {'name': 'Nongpoh Transit Depot', 'lat': 25.9059, 'lon': 91.8815, 'type': 'town', 'pop': 28000, 'buffer': 8},
+    'shillong_hub': {'name': 'Shillong District Logistics Depot', 'lat': 25.5788, 'lon': 91.8933, 'type': 'supply_hub', 'pop': 143000, 'buffer': 12},
+    'cherrapunjee': {'name': 'Cherrapunjee (Sohra) Relief Post', 'lat': 25.2702, 'lon': 91.7323, 'type': 'town', 'pop': 12500, 'buffer': 5},
+    'mawsynram': {'name': 'Mawsynram Forward Post', 'lat': 25.2970, 'lon': 91.5826, 'type': 'remote_village', 'pop': 6800, 'buffer': 4},
+    'jowai': {'name': 'Jowai District Supply Depot', 'lat': 25.4502, 'lon': 92.2045, 'type': 'town', 'pop': 38500, 'buffer': 9},
     'dawki': {'name': 'Dawki Border Trade & Supply Post', 'lat': 25.1898, 'lon': 92.0195, 'type': 'town', 'pop': 9500, 'buffer': 6},
     'khliehriat': {'name': 'Khliehriat Mining & Logistics Hub', 'lat': 25.3556, 'lon': 92.3689, 'type': 'town', 'pop': 24000, 'buffer': 7},
     'sonapur': {'name': 'Sonapur / Lubha Bridge Lifeline Post', 'lat': 25.1120, 'lon': 92.3629, 'type': 'junction', 'pop': 4200, 'buffer': 3},
-    'haflong': {'name': 'Haflong Hill Supply Depot', 'lat': 25.2229, 'lon': 93.0000, 'type': 'supply_hub', 'pop': 45000, 'buffer': 10},
+    'haflong': {'name': 'Haflong Hill Supply Depot', 'lat': 25.1825, 'lon': 93.0180, 'type': 'supply_hub', 'pop': 45000, 'buffer': 10},
     'umrangso': {'name': 'Umrangso Industrial Junction', 'lat': 25.5119, 'lon': 92.7424, 'type': 'town', 'pop': 18000, 'buffer': 7},
-    'badarpur': {'name': 'Badarpur Rail-Road Gateway', 'lat': 24.9968, 'lon': 92.5164, 'type': 'town', 'pop': 32000, 'buffer': 8},
-    'silchar_hub': {'name': 'Silchar Central Relief Base', 'lat': 24.9968, 'lon': 92.7418, 'type': 'supply_hub', 'pop': 175000, 'buffer': 14},
-    'karimganj': {'name': 'Karimganj Border Depot', 'lat': 24.9968, 'lon': 92.4304, 'type': 'town', 'pop': 67000, 'buffer': 9}
+    'badarpur': {'name': 'Badarpur Rail-Road Gateway', 'lat': 24.9050, 'lon': 92.5480, 'type': 'town', 'pop': 32000, 'buffer': 8},
+    'silchar_hub': {'name': 'Silchar Central Relief Base', 'lat': 24.8333, 'lon': 92.7789, 'type': 'supply_hub', 'pop': 175000, 'buffer': 14},
+    'karimganj': {'name': 'Karimganj Border Depot', 'lat': 24.8710, 'lon': 92.4304, 'type': 'town', 'pop': 67000, 'buffer': 9}
 }
 
 def load_nodes():
@@ -97,7 +98,7 @@ def load_nodes():
                 'description': desc
             }
 
-    # Match and designate prominent landmark hubs
+    # Match and designate prominent landmark hubs with precise geographic coordinates
     for alias, l_info in LANDMARK_COORDS.items():
         best_id = None
         min_dist = float('inf')

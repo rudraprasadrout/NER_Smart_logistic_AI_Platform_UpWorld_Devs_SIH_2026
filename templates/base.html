@@ -11,44 +11,58 @@
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY=" crossorigin=""/>
 
+  <link rel="icon" type="image/png" href="{{ url_for('static', filename='images/logo.png') }}">
   <link rel="stylesheet" href="{{ url_for('static', filename='css/variables.css') }}">
   <link rel="stylesheet" href="{{ url_for('static', filename='css/base.css') }}">
   <link rel="stylesheet" href="{{ url_for('static', filename='css/components.css') }}">
   <link rel="stylesheet" href="{{ url_for('static', filename='css/map.css') }}">
   <link rel="stylesheet" href="{{ url_for('static', filename='css/field_app.css') }}">
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/chatbot.css') }}">
   {% block extra_css %}{% endblock %}
 </head>
 <body>
 
   <header class="app-header">
-    <a href="{{ url_for('index') }}" class="brand-section">
-      <div class="brand-logo">P</div>
-      <div class="brand-text">
-        <div class="brand-title">PathNER</div>
-        <div class="brand-subtitle">NER Logistics Intelligence</div>
+    <a href="{{ url_for('index') }}" class="brand-section" style="display:flex;align-items:center;gap:12px;text-decoration:none">
+      <img src="{{ url_for('static', filename='images/logo.png') }}" alt="PathNER AI" style="height:42px;width:auto;object-fit:contain;flex-shrink:0">
+      <div style="display:flex;flex-direction:column;line-height:1.15">
+        <span style="font-weight:900;font-size:18px;letter-spacing:-0.5px;color:var(--text-heading)">Path<span style="color:#f59e0b">NER</span></span>
+        <span style="font-size:9px;font-weight:800;letter-spacing:1.2px;color:var(--status-safe);text-transform:uppercase">Northeast India</span>
       </div>
     </a>
 
     <nav>
       <ul class="nav-links">
         <li class="nav-item {% if active_page == 'dashboard' %}active{% endif %}">
-          <a href="{{ url_for('index') }}">Control Room</a>
+          <a href="{{ url_for('index') }}" style="display:flex;align-items:center;gap:6px">
+            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect width="7" height="9" x="3" y="3" rx="1"/><rect width="7" height="5" x="14" y="3" rx="1"/><rect width="7" height="9" x="14" y="12" rx="1"/><rect width="7" height="5" x="3" y="16" rx="1"/></svg>
+            <span>Control Room</span>
+          </a>
         </li>
         <li class="nav-item {% if active_page == 'routes' %}active{% endif %}">
-          <a href="{{ url_for('route_planner') }}">Route Dispatch</a>
+          <a href="{{ url_for('route_planner') }}" style="display:flex;align-items:center;gap:6px">
+            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="6" cy="19" r="3"/><path d="M9 19h8.5a3.5 3.5 0 0 0 0-7h-11a3.5 3.5 0 0 1 0-7H15"/><circle cx="18" cy="5" r="3"/></svg>
+            <span>Route Dispatch</span>
+          </a>
         </li>
-        <li class="nav-item {% if active_page == 'field' %}active{% endif %}">
-          <a href="{{ url_for('field_reporter') }}">Field Report</a>
+        <li class="nav-item {% if active_page == 'field_app' or active_page == 'field' %}active{% endif %}">
+          <a href="{{ url_for('field_reporter') }}" style="display:flex;align-items:center;gap:6px">
+            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14.5 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V7.5L14.5 2z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/></svg>
+            <span>Field Report</span>
+          </a>
         </li>
         <li class="nav-item {% if active_page == 'disaster' %}active{% endif %}">
-          <a href="{{ url_for('disaster_view') }}" style="color:var(--status-danger)">Emergency</a>
+          <a href="{{ url_for('disaster_view') }}" style="display:flex;align-items:center;gap:6px">
+            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/></svg>
+            <span>Emergency Mode</span>
+          </a>
         </li>
       </ul>
     </nav>
 
     <div class="header-controls">
-      <div class="status-indicator">
-        <div class="status-dot"></div>
+      <div class="header-status">
+        <span class="pulse-dot"></span>
         <span>LIVE</span>
       </div>
       <select id="lang-select" class="header-select">
@@ -65,6 +79,69 @@
     {% block content %}{% endblock %}
   </main>
 
+  <!-- PathNER Drishti AI Floating Copilot Widget -->
+  <div class="ai-chat-widget">
+    <!-- Chat Drawer Window -->
+    <div id="ai-chat-window" class="ai-chat-window">
+      <!-- Header with Language Selector -->
+      <div class="ai-chat-header">
+        <div class="ai-chat-header-top">
+          <div class="ai-chat-header-info">
+            <div class="ai-chat-header-avatar">
+              <img src="{{ url_for('static', filename='images/logo.png') }}" alt="Drishti AI">
+            </div>
+            <div>
+              <div class="ai-chat-header-name">Drishti AI (দৃষ্টি / दृष्टि)</div>
+              <div class="ai-chat-header-status">Live Logistics Telemetry</div>
+            </div>
+          </div>
+          <button id="ai-chat-close-btn" class="ai-chat-close-btn" title="Close console">
+            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+          </button>
+        </div>
+
+        <!-- In-Drawer Multilingual Switcher -->
+        <div class="drishti-lang-tabs" id="drishti-lang-tabs">
+          <button class="drishti-lang-tab active" data-lang="en">EN</button>
+          <button class="drishti-lang-tab" data-lang="as">অসমীয়া</button>
+          <button class="drishti-lang-tab" data-lang="bn">বাংলা</button>
+          <button class="drishti-lang-tab" data-lang="hi">हिन्दी</button>
+        </div>
+      </div>
+
+      <!-- Quick Suggestion Chips -->
+      <div id="ai-chat-chips" class="ai-chat-chips">
+        <button class="ai-chip" data-prompt="Is NH-6 open for heavy supply trucks?" id="chip-nh6">NH-6 Passability</button>
+        <button class="ai-chip" data-prompt="What is the safest bypass route from Guwahati to Silchar?" id="chip-route">Silchar Safe Bypass</button>
+        <button class="ai-chip" data-prompt="Which settlements are isolated right now?" id="chip-isolated">Severed Hamlets</button>
+        <button class="ai-chip" data-prompt="How do I submit an incident report offline?" id="chip-offline">Offline Field Sync</button>
+      </div>
+
+      <!-- Messages Stream -->
+      <div id="ai-chat-messages" class="ai-chat-messages"></div>
+
+      <!-- Input Bar -->
+      <div class="ai-chat-input-bar">
+        <input type="text" id="ai-chat-input" class="ai-chat-input" placeholder="Ask Drishti AI about routes, NH-6, landslides..." autocomplete="off">
+        <button id="ai-chat-send-btn" class="ai-chat-send-btn" title="Transmit query">
+          <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="22" y1="2" x2="11" y2="13"/><polygon points="22 2 15 22 11 13 2 9 22 2"/></svg>
+        </button>
+      </div>
+    </div>
+
+    <!-- High-Visibility Floating Toggle Launcher Button -->
+    <div id="ai-chat-launcher" class="ai-chat-launcher">
+      <div class="ai-launcher-icon-wrap">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M2 12s3-7 10-7 10 7 10 7-3 7-10 7-10-7-10-7Z"/><circle cx="12" cy="12" r="3"/></svg>
+        <div class="ai-launcher-pulse"></div>
+      </div>
+      <div class="ai-launcher-text">
+        <span class="ai-launcher-title">Drishti AI</span>
+        <span class="ai-launcher-sub">Tactical Copilot (Live)</span>
+      </div>
+    </div>
+  </div>
+
   <footer class="app-footer">
     <span>Assam &rarr; Meghalaya Lifeline &middot; Guwahati &mdash; Shillong &mdash; Silchar</span>
     <span>Multi-hop Graph Analysis &middot; 72h Forecast &middot; Offline-First Sync</span>
@@ -80,6 +157,7 @@
   <script src="{{ url_for('static', filename='js/forecast_slider.js') }}"></script>
   <script src="{{ url_for('static', filename='js/forecast_chart.js') }}"></script>
   <script src="{{ url_for('static', filename='js/vehicle_tracker.js') }}"></script>
+  <script src="{{ url_for('static', filename='js/chatbot.js') }}"></script>
   {% block extra_js %}{% endblock %}
 </body>
 </html>

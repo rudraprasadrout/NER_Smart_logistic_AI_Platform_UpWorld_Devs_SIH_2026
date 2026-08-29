@@ -46,6 +46,29 @@ def submit_incident_report():
         VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
     ''', (report_id, client_report_id, edge_id, reporter_name, hazard_type, severity, description, lat, lon, photo_url, timestamp))
     
+    # Generate dynamic alert in database
+    alert_id = str(uuid.uuid4())
+    alert_title = f"{hazard_type} Reported on {edge_id or 'Corridor'}"
+    alert_msg = description or f"{severity} severity incident reported by {reporter_name}. Exercise extreme caution."
+    cursor.execute('''
+        INSERT INTO alerts (id, category, severity, edge_id, title_en, title_as, title_hi, title_bn, message_en, message_as, message_hi, message_bn, timestamp)
+        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+    ''', (
+        alert_id,
+        'ROAD_HAZARD',
+        severity.upper(),
+        edge_id or 'general',
+        alert_title,
+        f"{edge_id or 'পথত'} {hazard_type}ৰ প্ৰতিবেদন দাখিল",
+        f"{edge_id or 'मार्ग पर'} {hazard_type} की सूचना",
+        f"{edge_id or 'রুটে'} {hazard_type} রিপোর্ট করা হয়েছে",
+        alert_msg,
+        f"{reporter_name} দ্বাৰা প্ৰতিবেদন দাখিল: {alert_msg}",
+        f"{reporter_name} द्वारा सूचित: {alert_msg}",
+        f"{reporter_name} দ্বারা রিপোর্ট করা হয়েছে: {alert_msg}",
+        timestamp
+    ))
+
     conn.commit()
     conn.close()
 

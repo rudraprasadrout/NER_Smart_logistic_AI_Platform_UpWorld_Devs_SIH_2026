@@ -4,6 +4,7 @@
 document.addEventListener('DOMContentLoaded', () => {
   window.mapEngine.init();
   window.isolationPanel.init();
+  window.forecastController?.init(loadDashboardState);
   loadDashboardState('current');
 
   // Forecast bar buttons
