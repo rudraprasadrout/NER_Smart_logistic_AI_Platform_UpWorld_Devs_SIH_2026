@@ -18,11 +18,34 @@ class ForecastChart {
       this.chart.destroy();
     }
 
-    const labels = ['Current Observed', '+24 Hours', '+48 Hours (Peak)', '+72 Hours'];
+    const labels = ['Current', '+24h', '+48h', '+72h'];
     
-    // Average rainfall and risk across all corridor segments
-    const rainData = [45.2, 72.8, 89.5, 52.0];
-    const riskData = [38.5, 62.4, 78.0, 48.2];
+    // Compute dynamic average rainfall and risk from live forecast timeline
+    let rainData = [15.0, 25.0, 35.0, 20.0];
+    let riskData = [36.5, 58.0, 68.5, 42.0];
+
+    if (forecastTimeline) {
+      const horizons = ['current', '24h', '48h', '72h'];
+      const dynamicRisks = [];
+      const dynamicRains = [];
+
+      horizons.forEach(h => {
+        const edgeList = forecastTimeline[h] || [];
+        if (edgeList.length > 0) {
+          const avgR = edgeList.reduce((acc, e) => acc + (e.risk_score || 0), 0) / edgeList.length;
+          const avgRain = edgeList.reduce((acc, e) => acc + (e.rainfall_mm || 0), 0) / edgeList.length;
+          dynamicRisks.push(Math.round(avgR * 10) / 10);
+          dynamicRains.push(Math.round(avgRain * 10) / 10);
+        }
+      });
+
+      if (dynamicRisks.length >= 3) {
+        riskData = dynamicRisks;
+      }
+      if (dynamicRains.length >= 3) {
+        rainData = dynamicRains;
+      }
+    }
 
     const isLight = document.documentElement.getAttribute('data-theme') === 'light';
     const textColor = isLight ? '#475569' : '#94a3b8';

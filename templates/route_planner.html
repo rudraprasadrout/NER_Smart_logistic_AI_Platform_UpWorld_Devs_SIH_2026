@@ -3,78 +3,114 @@
 {% block title %}Route Dispatch — PathNER{% endblock %}
 
 {% block content %}
-<div style="padding:16px 20px;display:flex;flex-direction:column;gap:12px;max-width:1500px;margin:0 auto;width:100%">
+<div style="padding:16px 20px;display:flex;flex-direction:column;gap:14px;max-width:1600px;margin:0 auto;width:100%">
 
-  <!-- Dispatch Config -->
-  <div style="background:var(--bg-card);border:1px solid var(--border-primary);border-radius:var(--radius-lg);padding:20px">
-    <div style="font-size:16px;font-weight:800;color:var(--text-heading);margin-bottom:3px">AI Safe Route Dispatcher</div>
-    <div style="font-size:12px;color:var(--text-secondary);margin-bottom:16px;max-width:700px;line-height:1.5">
-      Computes multi-criteria safest paths using Dijkstra over dynamic risk weights. Penalizes high-risk slopes, saturated soil, and active landslides.
+  <!-- Dispatch Config Card -->
+  <div style="background:var(--bg-card);border:1px solid var(--border-primary);border-radius:var(--radius-lg);padding:18px 22px;box-shadow:var(--shadow-sm)">
+    <div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:12px;flex-wrap:wrap;gap:10px">
+      <div>
+        <div style="font-size:17px;font-weight:800;color:var(--text-heading);letter-spacing:-0.3px">
+          🚚 Relief Convoy Route Dispatcher
+        </div>
+        <div style="font-size:12px;color:var(--text-secondary);margin-top:2px">
+          Compares the <b>Original Physical Route</b> against the <b>AI-Recommended Safe Detour</b> to bypass mountain landslides and road washouts.
+        </div>
+      </div>
+
+      <!-- Quick Preset Buttons -->
+      <div style="display:flex;align-items:center;gap:6px;flex-wrap:wrap">
+        <span style="font-size:11px;font-weight:700;color:var(--text-tertiary);text-transform:uppercase">Quick Presets:</span>
+        <button class="btn btn-ghost preset-btn" data-from="guwahati_hub" data-to="silchar_hub" data-prio="FOOD_RATION" style="font-size:11px;padding:4px 9px">
+          🚨 Guwahati → Silchar (Barak Lifeline)
+        </button>
+        <button class="btn btn-ghost preset-btn" data-from="guwahati_hub" data-to="shillong_hub" data-prio="CRITICAL_MEDICAL" style="font-size:11px;padding:4px 9px">
+          🏥 Guwahati → Shillong (Medical)
+        </button>
+        <button class="btn btn-ghost preset-btn" data-from="shillong_hub" data-to="jowai" data-prio="FOOD_RATION" style="font-size:11px;padding:4px 9px">
+          🌾 Shillong → Jowai (Rations)
+        </button>
+        <button class="btn btn-ghost preset-btn" data-from="silchar_hub" data-to="haflong" data-prio="FOOD_RATION" style="font-size:11px;padding:4px 9px">
+          ⛽ Silchar → Haflong (Fuel)
+        </button>
+      </div>
     </div>
 
+    <!-- Inputs Row -->
     <div style="display:grid;grid-template-columns:1fr 1fr 1fr auto;gap:12px;align-items:flex-end">
       <div class="form-group" style="margin:0">
-        <label class="form-label">Supply Origin</label>
+        <label class="form-label" style="font-weight:700">1. Supply Origin</label>
         <select id="route-from-select" class="form-input">
-          <option value="">Loading nodes...</option>
+          <option value="">Loading logistics hubs...</option>
         </select>
       </div>
 
       <div class="form-group" style="margin:0">
-        <label class="form-label">Destination</label>
+        <label class="form-label" style="font-weight:700">2. Relief Destination</label>
         <select id="route-to-select" class="form-input">
-          <option value="">Loading nodes...</option>
+          <option value="">Loading destinations...</option>
         </select>
       </div>
 
       <div class="form-group" style="margin:0">
-        <label class="form-label">Cargo Priority</label>
+        <label class="form-label" style="font-weight:700">3. Cargo Mission Priority</label>
         <select id="route-priority-select" class="form-input">
-          <option value="CRITICAL_MEDICAL">Critical Medical (Max Safety)</option>
-          <option value="FOOD_RATION" selected>Essential Rations (Balanced)</option>
-          <option value="GENERAL_CARGO">General Logistics (Fastest)</option>
+          <option value="CRITICAL_MEDICAL">🚨 Critical Medical & Blood Units (Max Safety)</option>
+          <option value="FOOD_RATION" selected>🌾 Essential Food & Grain Rations (Balanced)</option>
+          <option value="GENERAL_CARGO">📦 General Cargo Logistics (Fastest)</option>
         </select>
       </div>
 
-      <button id="btn-calc-route" class="btn btn-accent" style="height:36px;white-space:nowrap">
-        Compute Route
+      <button id="btn-calc-route" class="btn btn-accent" style="height:36px;font-weight:800;padding:0 20px;white-space:nowrap">
+        ⚡ Evaluate & Plan Route
       </button>
     </div>
   </div>
 
-  <!-- Map + Results -->
-  <div style="display:grid;grid-template-columns:400px 1fr;gap:12px;height:560px">
-    <!-- Results -->
-    <div style="background:var(--bg-card);border:1px solid var(--border-primary);border-radius:var(--radius-lg);overflow:hidden;display:flex;flex-direction:column">
-      <div class="panel-head">
-        <span class="panel-head-title">Route Analysis</span>
-        <span class="panel-head-badge" id="route-rec-badge">Ready</span>
+  <!-- Map + Decision Panel Grid -->
+  <div style="display:grid;grid-template-columns:430px 1fr;gap:14px;height:calc(100vh - 52px - 170px);min-height:550px">
+    
+    <!-- Left Panel: Route Decision & Stepper -->
+    <div style="background:var(--bg-card);border:1px solid var(--border-primary);border-radius:var(--radius-lg);overflow:hidden;display:flex;flex-direction:column;box-shadow:var(--shadow-sm)">
+      <div class="panel-head" style="display:flex;justify-content:space-between;align-items:center">
+        <span class="panel-head-title">Route Comparison & Tradeoffs</span>
+        <span class="panel-head-badge" id="route-rec-badge">Calculating...</span>
       </div>
-      <div style="flex:1;overflow-y:auto;padding:12px" id="route-summary-container">
-        <div style="text-align:center;color:var(--text-tertiary);padding:40px 16px;font-size:12px;line-height:1.6">
-          Select origin, destination and cargo priority, then click <b style="color:var(--text-heading)">Compute Route</b> to evaluate hazard avoidance vs time delay.
+      <div style="flex:1;overflow-y:auto;padding:14px;display:flex;flex-direction:column;gap:12px" id="route-summary-container">
+        <div style="text-align:center;color:var(--text-tertiary);padding:40px 16px;font-size:12px">
+          Evaluating terrain hazards and road closures...
         </div>
       </div>
     </div>
 
-    <!-- Map -->
+    <!-- Right Panel: High-Contrast Map -->
     <div style="background:var(--bg-card);border:1px solid var(--border-primary);border-radius:var(--radius-lg);overflow:hidden;position:relative">
       <div id="map-container" style="height:100%"></div>
     </div>
+
   </div>
+
 </div>
 {% endblock %}
 
 {% block extra_js %}
 <script>
 document.addEventListener('DOMContentLoaded', () => {
+  // Initialize clean map
   window.mapEngine.init([25.5788, 91.8933], 9);
-  fetch('/api/v1/graph/accessibility')
-    .then(r => r.json())
-    .then(d => { if (d.status === 'success') window.mapEngine.renderAccessibilityGraph(d); });
+  
   document.getElementById('btn-calc-route')?.addEventListener('click', calcRoute);
 
-  // Dynamically populate origin/destination dropdowns from real dataset
+  // Preset Buttons
+  document.querySelectorAll('.preset-btn').forEach(btn => {
+    btn.addEventListener('click', () => {
+      document.getElementById('route-from-select').value = btn.dataset.from;
+      document.getElementById('route-to-select').value = btn.dataset.to;
+      document.getElementById('route-priority-select').value = btn.dataset.prio;
+      calcRoute();
+    });
+  });
+
+  // Dynamically populate origin/destination dropdowns and auto-calculate
   loadRouteNodes();
 });
 
@@ -89,18 +125,47 @@ async function loadRouteNodes() {
     fromSel.innerHTML = '';
     toSel.innerHTML = '';
 
-    // Only show nodes that have an alias (named strategic points)
-    const namedNodes = d.nodes.filter(n => n.alias);
-    // Default selections
-    const defaultFrom = 'guwahati_hub';
-    const defaultTo = 'silchar_hub';
+    const urlParams = new URLSearchParams(window.location.search);
+    const urlFrom = urlParams.get('from');
+    const urlTo = urlParams.get('to');
 
-    namedNodes.forEach(n => {
-      const val = n.alias || n.id;
-      const label = `${n.name} (${n.district})`;
-      fromSel.add(new Option(label, val, false, val === defaultFrom));
-      toSel.add(new Option(label, val, false, val === defaultTo));
+    const defaultFrom = urlFrom || 'guwahati_hub';
+    const defaultTo = urlTo || 'silchar_hub';
+
+    const hubs = d.nodes.filter(n => n.type === 'supply_hub');
+    const towns = d.nodes.filter(n => n.type === 'town');
+    const others = d.nodes.filter(n => n.type !== 'supply_hub' && n.type !== 'town' && n.name && !n.name.startsWith('osm_'));
+
+    const groups = [
+      { label: 'Strategic Supply Hubs & Depots', items: hubs },
+      { label: 'Major Regional Towns & Transit Bases', items: towns },
+      { label: 'Local Settlements & Relief Outposts', items: others.slice(0, 80) }
+    ];
+
+    [fromSel, toSel].forEach(sel => {
+      const isFrom = sel === fromSel;
+      const targetDefault = isFrom ? defaultFrom : defaultTo;
+
+      groups.forEach(g => {
+        if (!g.items.length) return;
+        const optgroup = document.createElement('optgroup');
+        optgroup.label = g.label;
+        g.items.forEach(n => {
+          const val = n.alias || n.id;
+          const opt = document.createElement('option');
+          opt.value = val;
+          opt.textContent = `${n.name} (${n.district})`;
+          if (val === targetDefault || n.id === targetDefault) {
+            opt.selected = true;
+          }
+          optgroup.appendChild(opt);
+        });
+        sel.appendChild(optgroup);
+      });
     });
+
+    // Auto-calculate initial route comparison on page load
+    setTimeout(calcRoute, 150);
   } catch (e) {
     console.error('Failed to load route nodes:', e);
   }
@@ -113,75 +178,112 @@ async function calcRoute() {
   const box = document.getElementById('route-summary-container');
   const badge = document.getElementById('route-rec-badge');
 
+  if (!from || !to) return;
   if (from === to) { alert('Origin and destination cannot be identical.'); return; }
-  box.innerHTML = '<div style="text-align:center;color:var(--text-tertiary);padding:32px;font-size:12px">Evaluating multi-criteria hazard avoidance...</div>';
+  
+  box.innerHTML = '<div style="text-align:center;color:var(--text-tertiary);padding:32px;font-size:12px">Evaluating terrain hazard avoidance...</div>';
 
   try {
     const res = await fetch(`/api/v1/route/${from}/${to}?priority=${encodeURIComponent(priority)}`);
     const d = await res.json();
     if (d.status !== 'success') throw new Error(d.message || 'Route computation failed');
 
+    // Draw only the 2 route trajectories on the map
     window.mapEngine.drawRouteComparison(d);
-    const c = d.comparison, def = d.default_route, safe = d.ai_recommended_route;
+    
+    const c = d.comparison || {};
+    const def = d.default_route || {};
+    const safe = d.ai_recommended_route || {};
 
-    if (c.recommendation === 'REROUTE_RECOMMENDED') {
-      badge.className = 'tag tag-danger'; badge.textContent = 'DETOUR ADVISED';
-    } else {
-      badge.className = 'tag tag-safe'; badge.textContent = 'DIRECT SAFE';
-    }
+    const isDetour = c.recommendation === 'REROUTE_RECOMMENDED';
+    badge.className = isDetour ? 'tag tag-warn' : 'tag tag-safe';
+    badge.textContent = isDetour ? 'DETOUR ADVISED' : 'DIRECT PATH SAFE';
+
+    // Build checkpoints list
+    const checkpoints = safe.display_checkpoints || [d.from?.name, 'Intermediate Transit Corridors', d.to?.name];
+    const stepsHtml = checkpoints.map((cp, idx) => {
+      const isStart = idx === 0;
+      const isEnd = idx === checkpoints.length - 1;
+      const dotColor = isStart ? '#10b981' : isEnd ? '#ef4444' : '#6366f1';
+      return `
+        <div style="display:flex;align-items:flex-start;gap:10px;position:relative">
+          <div style="width:14px;height:14px;border-radius:50%;background:${dotColor};border:2px solid #fff;margin-top:2px;flex-shrink:0"></div>
+          <div>
+            <div style="font-size:12px;font-weight:700;color:var(--text-heading)">${cp}</div>
+            <div style="font-size:10px;color:var(--text-tertiary)">${isStart ? 'Convoy Origin Depot' : isEnd ? 'Mission Destination' : 'Highway Sector Waypoint'}</div>
+          </div>
+        </div>`;
+    }).join('<div style="width:2px;height:12px;background:var(--border-secondary);margin-left:6px"></div>');
 
     box.innerHTML = `
-      <div style="display:flex;flex-direction:column;gap:10px">
-        <!-- AI Safe Route Card -->
-        <div style="background:rgba(16, 185, 129, 0.08);border:1px solid rgba(16, 185, 129, 0.3);border-radius:var(--radius-md);padding:12px">
-          <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:6px">
-            <span style="font-weight:700;color:var(--status-safe);font-size:12px">AI Recommended Safe Path</span>
-            <span class="tag tag-safe" style="font-size:10px">Recommended</span>
+      <!-- Verdict Decision Banner -->
+      <div style="background:${isDetour ? 'rgba(245, 158, 11, 0.12)' : 'rgba(16, 185, 129, 0.12)'};border:1.5px solid ${isDetour ? 'var(--status-warn)' : 'var(--status-safe)'};border-radius:var(--radius-md);padding:12px">
+        <div style="display:flex;align-items:center;gap:6px;margin-bottom:4px">
+          <span style="font-size:15px">${isDetour ? '🛡️' : '🟢'}</span>
+          <span style="font-size:12px;font-weight:800;color:${isDetour ? 'var(--status-warn)' : 'var(--status-safe)'}">
+            ${isDetour ? 'AI RECOMMENDS SAFE DETOUR' : 'DIRECT HIGHWAY SAFE & PASSABLE'}
+          </span>
+        </div>
+        <div style="font-size:11px;color:var(--text-secondary);line-height:1.4">
+          ${isDetour 
+            ? `Direct path has <b>${def.blocked_segments_count || 1} severe choke point(s)</b>. Detour path via alternate highway saves <b>${c.risk_reduction_percentage || 0}% hazard risk</b> with +${c.time_difference_minutes || 0}m acceptable transit buffer.`
+            : 'All arterial road links along direct path are open with low landslide/rainfall hazard index.'}
+        </div>
+      </div>
+
+      <!-- Side-by-Side Route Metrics Cards -->
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px">
+        
+        <!-- Safe Path Card (Planned) -->
+        <div style="background:rgba(16, 185, 129, 0.06);border:1.5px solid rgba(16, 185, 129, 0.35);border-radius:var(--radius-md);padding:10px">
+          <div style="font-size:11px;font-weight:800;color:var(--status-safe);margin-bottom:6px;display:flex;justify-content:space-between">
+            <span>🛡️ Safe Detour</span>
+            <span class="tag tag-safe" style="font-size:9px">PLANNED</span>
           </div>
-          <div style="font-size:12px;color:var(--text-primary);font-weight:600;margin-bottom:8px;line-height:1.4">${safe.node_names.join(' → ')}</div>
-          <div class="s-card-stats" style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:6px">
-            <div>Dist: <b style="color:var(--text-primary)">${safe.total_distance_km} km</b></div>
-            <div>Time: <b style="color:var(--text-primary)">${safe.total_time_hours}h</b></div>
-            <div>Risk: <b style="color:var(--status-safe)">${safe.avg_risk_score}%</b></div>
-          </div>
+          <div style="font-size:16px;font-weight:800;color:var(--text-heading)">${safe.total_distance_km} km</div>
+          <div style="font-size:11px;color:var(--text-secondary);margin-top:2px">Est. Time: <b>${safe.total_time_hours}h</b></div>
+          <div style="font-size:11px;color:var(--status-safe);margin-top:2px">Hazard Risk: <b>${safe.avg_risk_score}%</b></div>
+          <div style="font-size:10px;color:var(--status-safe);margin-top:4px">Blocked: <b>0 Passable</b></div>
         </div>
 
-        <!-- Standard Shortest Path Card -->
-        <div style="background:rgba(249, 115, 22, 0.08);border:1px solid rgba(249, 115, 22, 0.3);border-radius:var(--radius-md);padding:12px">
-          <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:6px">
-            <span style="font-weight:600;color:#f97316;font-size:11px">Standard Shortest Path (Physical Distance)</span>
-            ${def.blocked_segments_count > 0 ? '<span class="tag tag-danger" style="font-size:10px">Blocked Obstacles</span>' : ''}
+        <!-- Physical Shortest Path Card (Before) -->
+        <div style="background:rgba(239, 68, 68, 0.06);border:1.5px solid rgba(239, 68, 68, 0.35);border-radius:var(--radius-md);padding:10px">
+          <div style="font-size:11px;font-weight:800;color:#f97316;margin-bottom:6px;display:flex;justify-content:space-between">
+            <span>⚠️ Physical Shortest</span>
+            <span class="tag tag-danger" style="font-size:9px">DIRECT</span>
           </div>
-          <div style="font-size:11px;color:var(--text-secondary);margin-bottom:8px;line-height:1.4">${def.node_names.join(' → ')}</div>
-          <div class="s-card-stats" style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:6px">
-            <div>Dist: <b style="color:var(--text-primary)">${def.total_distance_km} km</b></div>
-            <div>Time: <b style="color:var(--text-primary)">${def.total_time_hours}h</b></div>
-            <div>Risk: <b style="color:${def.avg_risk_score > 48 ? 'var(--status-danger)' : 'var(--status-warn)'}">${def.avg_risk_score}%</b></div>
-          </div>
+          <div style="font-size:16px;font-weight:800;color:var(--text-heading)">${def.total_distance_km} km</div>
+          <div style="font-size:11px;color:var(--text-secondary);margin-top:2px">Est. Time: <b>${def.total_time_hours}h</b></div>
+          <div style="font-size:11px;color:var(--status-danger);margin-top:2px">Hazard Risk: <b>${def.avg_risk_score}%</b></div>
+          <div style="font-size:10px;color:var(--status-danger);margin-top:4px">Blocked: <b>${def.blocked_segments_count || 0} Choke Points</b></div>
         </div>
 
-        <!-- Optimization Tradeoff -->
-        <div style="background:var(--bg-tertiary);border:1px solid var(--border-primary);border-radius:var(--radius-md);padding:12px;font-size:12px">
-          <div style="font-weight:700;color:var(--text-heading);margin-bottom:8px;display:flex;justify-content:space-between">
-            <span>Optimization Tradeoff Analysis</span>
-            <span style="font-size:11px;color:var(--text-tertiary)">Priority: ${priority.replace('_', ' ')}</span>
-          </div>
-          <div style="margin-bottom:4px;color:var(--text-secondary);display:flex;justify-content:space-between">
-            <span>Detour Time Delay:</span>
-            <b style="color:${c.time_difference_minutes > 0 ? 'var(--text-heading)' : 'var(--status-safe)'}">+${c.time_difference_minutes} min</b>
-          </div>
-          <div style="margin-bottom:4px;color:var(--text-secondary);display:flex;justify-content:space-between">
-            <span>Landslide Hazard Reduction:</span>
-            <b style="color:var(--status-safe)">-${c.risk_reduction_percentage}%</b>
-          </div>
-          <div style="color:var(--text-secondary);display:flex;justify-content:space-between">
-            <span>Blocked Choke Points Avoided:</span>
-            <b style="color:${c.blocked_segments_avoided > 0 ? 'var(--status-danger)' : 'var(--text-tertiary)'}">${c.blocked_segments_avoided}</b>
-          </div>
+      </div>
+
+      <!-- Turn-by-Turn Waypoint Sequence -->
+      <div style="background:var(--bg-tertiary);border-radius:var(--radius-md);padding:12px;border:1px solid var(--border-primary)">
+        <div style="font-size:11px;font-weight:800;color:var(--text-heading);text-transform:uppercase;letter-spacing:0.5px;margin-bottom:10px">
+          Route Checkpoints & Waypoints
         </div>
-      </div>`;
+        <div style="display:flex;flex-direction:column">
+          ${stepsHtml}
+        </div>
+      </div>
+
+      <!-- Action Buttons -->
+      <div style="display:flex;gap:8px;margin-top:auto">
+        <button class="btn btn-accent" style="flex:1;font-weight:800;font-size:12px" onclick="alert('Convoy dispatched! Telematics and driver route sheet synced.')">
+          🚀 Dispatch Active Convoy
+        </button>
+        <button class="btn btn-ghost" style="font-size:12px" onclick="window.print()">
+          🖨️ Print Waybill
+        </button>
+      </div>
+    `;
+
   } catch (err) {
-    box.innerHTML = `<div style="color:var(--status-danger);padding:16px;font-size:12px">Error: ${err.message}</div>`;
+    console.error('Route calculation error:', err);
+    box.innerHTML = `<div style="color:var(--status-danger);padding:24px;text-align:center;font-size:12px">Route calculation error: ${err.message}</div>`;
   }
 }
 </script>

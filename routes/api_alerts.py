@@ -66,3 +66,28 @@ def subscribe_alerts():
         'message': f"Subscribed {data.get('stakeholder_name', 'User')} for {data.get('language', 'en')} priority alerts."
     })
 
+@api_alerts_bp.route('/ai/advisory', methods=['GET', 'POST'])
+def get_ai_advisory():
+    """Generates tactical logistics intelligence advisory using Mistral AI or fallback engine."""
+    from models.mistral_service import mistral_service
+    from models.isolation_engine import IsolationEngine
+    
+    lang = request.args.get('lang', 'en').lower()
+    iso_data = IsolationEngine.compute_isolation_index()
+    summary = iso_data.get('summary', {})
+    
+    district_status = {
+        'isolated_count': summary.get('isolated_count', 0),
+        'at_risk_count': summary.get('at_risk_count', 0),
+        'severed_corridors': summary.get('severed_corridors_count', 0)
+    }
+    
+    advisory_res = mistral_service.generate_advisory(
+        district_status=district_status,
+        isolated_count=summary.get('isolated_count', 0),
+        isolated_pop=summary.get('total_isolated_population', 0),
+        language=lang
+    )
+    
+    return jsonify(advisory_res)
+

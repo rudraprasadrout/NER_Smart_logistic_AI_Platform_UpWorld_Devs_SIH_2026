@@ -27,7 +27,9 @@ class Config:
     RISK_HIGH_THRESHOLD = float(os.environ.get('RISK_HIGH_THRESHOLD', 50.0))
     RISK_MODERATE_THRESHOLD = float(os.environ.get('RISK_MODERATE_THRESHOLD', 25.0))
     
-    # Optional Third-Party Integration Keys
+    # Optional Third-Party Integration Keys & AI Models
+    MISTRAL_API_KEY = os.environ.get('MISTRAL_API_KEY', '')
+    MISTRAL_MODEL = os.environ.get('MISTRAL_MODEL', 'mistral-small-latest')
     OPENWEATHER_API_KEY = os.environ.get('OPENWEATHER_API_KEY', '')
     MAPBOX_ACCESS_TOKEN = os.environ.get('MAPBOX_ACCESS_TOKEN', '')
     SMS_GATEWAY_API_KEY = os.environ.get('SMS_GATEWAY_API_KEY', '')

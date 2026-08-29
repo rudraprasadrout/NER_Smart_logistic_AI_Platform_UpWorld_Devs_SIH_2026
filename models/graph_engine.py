@@ -1,3 +1,4 @@
+import math
 import networkx as nx
 from .data_loader import load_nodes, load_edges, load_weather, _get_district_and_state
 from .risk_model import risk_model
@@ -13,6 +14,8 @@ class GraphEngine:
         self.graph = nx.Graph()
         self._strategic_corridors = []
         self._bridge_edges = []
+        self._cached_accessibility = {}
+        self._cached_graph_edges = {}
         self._build_network_topology()
         self.rebuild_graph()
 
@@ -54,16 +57,16 @@ class GraphEngine:
         # Authentic multi-waypoint highway geometries following real OpenStreetMap road paths
         REAL_ROAD_GEOMETRIES = {
             ('guwahati_hub', 'nongpoh'): [
-                [26.1105, 91.8150], [26.0820, 91.8410], [26.0450, 91.8680], 
+                [26.1158, 91.8150], [26.0820, 91.8410], [26.0450, 91.8680], 
                 [25.9980, 91.8790], [25.9520, 91.8840], [25.9059, 91.8815]
             ],
             ('nongpoh', 'shillong_hub'): [
                 [25.9059, 91.8815], [25.8640, 91.8880], [25.8120, 91.8950],
                 [25.7510, 91.9050], [25.6890, 91.9210], [25.6520, 91.9140],
-                [25.6120, 91.8980], [25.5858, 91.8933]
+                [25.6120, 91.8980], [25.5788, 91.8933]
             ],
             ('shillong_hub', 'jowai'): [
-                [25.5858, 91.8933], [25.5680, 91.9320], [25.5520, 91.9840],
+                [25.5788, 91.8933], [25.5680, 91.9320], [25.5520, 91.9840],
                 [25.5480, 92.0520], [25.5310, 92.1150], [25.4950, 92.1680],
                 [25.4502, 92.2045]
             ],
@@ -76,26 +79,25 @@ class GraphEngine:
                 [25.2120, 92.3810], [25.1650, 92.3720], [25.1120, 92.3629]
             ],
             ('sonapur', 'badarpur'): [
-                [25.1120, 92.3629], [25.0850, 92.3820], [25.0520, 92.4150],
-                [25.0210, 92.4680], [24.9968, 92.5164]
+                [25.1120, 92.3629], [25.0850, 92.3920], [25.0520, 92.4250],
+                [24.9850, 92.4850], [24.9050, 92.5480]
             ],
             ('badarpur', 'silchar_hub'): [
-                [24.9968, 92.5164], [24.9540, 92.5780], [24.9120, 92.6350],
-                [24.8720, 92.6980], [24.8330, 92.7780], [24.8250, 92.7950]
+                [24.9050, 92.5480], [24.8850, 92.6120], [24.8620, 92.6850],
+                [24.8420, 92.7350], [24.8333, 92.7789]
             ],
             ('guwahati_hub', 'umrangso'): [
-                [26.1105, 91.8150], [26.1250, 92.0520], [26.1420, 92.2150],
+                [26.1158, 91.8150], [26.1250, 92.0520], [26.1420, 92.2150],
                 [26.1150, 92.3850], [26.0120, 92.5420], [25.8320, 92.6450],
                 [25.6520, 92.7120], [25.5119, 92.7424]
             ],
             ('umrangso', 'haflong'): [
                 [25.5119, 92.7424], [25.4650, 92.8120], [25.4120, 92.8850],
-                [25.3520, 92.9520], [25.2850, 92.9980], [25.2229, 93.0150]
+                [25.3520, 92.9520], [25.2850, 92.9980], [25.1825, 93.0180]
             ],
             ('haflong', 'silchar_hub'): [
-                [25.2229, 93.0150], [25.1850, 92.9520], [25.1120, 92.8680],
-                [25.0450, 92.8210], [24.9520, 92.8050], [24.8330, 92.7780],
-                [24.8250, 92.7950]
+                [25.1825, 93.0180], [25.1250, 92.9520], [25.0450, 92.8680],
+                [24.9650, 92.8210], [24.8950, 92.7950], [24.8333, 92.7789]
             ],
             ('jowai', 'umrangso'): [
                 [25.4502, 92.2045], [25.4850, 92.3520], [25.5120, 92.5150],
@@ -106,17 +108,15 @@ class GraphEngine:
                 [25.5119, 92.7424]
             ],
             ('shillong_hub', 'cherrapunjee'): [
-                [25.5858, 91.8933], [25.5210, 91.8450], [25.4520, 91.8020],
-                [25.3850, 91.7580], [25.3210, 91.7350], [25.2750, 91.7280],
-                [25.2067, 91.7320]
+                [25.5788, 91.8933], [25.5120, 91.8450], [25.4450, 91.8020],
+                [25.3780, 91.7650], [25.3150, 91.7420], [25.2702, 91.7323]
             ],
             ('shillong_hub', 'mawsynram'): [
-                [25.5858, 91.8933], [25.5210, 91.8450], [25.4480, 91.7580],
-                [25.3620, 91.6420], [25.2850, 91.6020], [25.1845, 91.5850]
+                [25.5788, 91.8933], [25.5150, 91.8250], [25.4420, 91.7450],
+                [25.3650, 91.6520], [25.2970, 91.5826]
             ],
             ('cherrapunjee', 'mawsynram'): [
-                [25.2067, 91.7320], [25.1950, 91.6850], [25.1880, 91.6320],
-                [25.1845, 91.5850]
+                [25.2702, 91.7323], [25.2850, 91.6650], [25.2970, 91.5826]
             ],
             ('jowai', 'dawki'): [
                 [25.4502, 92.2045], [25.3850, 92.1520], [25.3120, 92.1050],
@@ -127,8 +127,7 @@ class GraphEngine:
                 [25.1120, 92.3629]
             ],
             ('badarpur', 'karimganj'): [
-                [24.9968, 92.5164], [24.9520, 92.4850], [24.9120, 92.4520],
-                [24.8710, 92.4304]
+                [24.9050, 92.5480], [24.8920, 92.4850], [24.8710, 92.4304]
             ]
         }
 
@@ -147,7 +146,9 @@ class GraphEngine:
 
             # Retrieve high-fidelity real curved road geometry
             geom = REAL_ROAD_GEOMETRIES.get((src_alias, dst_alias))
-            if not geom:
+            if geom and len(geom) >= 2:
+                geom = [[node_u['lat'], node_u['lon']]] + list(geom[1:-1]) + [[node_v['lat'], node_v['lon']]]
+            else:
                 geom = [[node_u['lat'], node_u['lon']], [mid_lat, mid_lon], [node_v['lat'], node_v['lon']]]
 
             edge_dict = {
@@ -191,17 +192,32 @@ class GraphEngine:
                 return n_id
         return None
 
+    def _initialize_caches(self):
+        self._cached_accessibility = {}
+        self._cached_graph_edges = {}
+
     def add_field_report(self, report):
         edge_id = report.get('edge_id')
         if edge_id:
             if edge_id not in self.field_reports:
                 self.field_reports[edge_id] = []
             self.field_reports[edge_id].append(report)
-            # Rebuild graph to reflect ground incident
+            # Invalidate caches to reflect ground incident
+            self._cached_accessibility.clear()
+            self._cached_graph_edges.clear()
+            try:
+                from .isolation_engine import IsolationEngine
+                IsolationEngine.clear_cache()
+            except ImportError:
+                pass
             self.rebuild_graph()
 
     def rebuild_graph(self, horizon=None):
         """Reconstructs the NetworkX graph with updated dynamic risk weights."""
+        cache_key = str(horizon)
+        if cache_key in self._cached_graph_edges and len(self.graph.edges) > 0:
+            return self._cached_graph_edges[cache_key]
+
         self.graph.clear()
         
         # Add nodes
@@ -220,14 +236,16 @@ class GraphEngine:
                 'soil_saturation_index': 0.5
             })
             
-            active_rep_count = len(self.field_reports.get(edge['id'], []))
+            active_reports = self.field_reports.get(edge['id'], [])
+            active_rep_count = len(active_reports)
+            
+            # Evaluate risk using serialized ML model
             risk_eval = risk_model.calculate_risk(edge, w, active_reports=active_rep_count, horizon=horizon)
-            
             risk_score = risk_eval['risk_score']
-            dist = max(0.1, edge['distance_km'])
-            speed = max(15.0, edge['avg_speed_kmh'])
+
+            dist = edge.get('distance_km', 10.0)
+            speed = max(15.0, edge.get('avg_speed_kmh', 45.0))
             
-            # Cost weight penalty: higher risk exponentially increases traversal cost
             # Blocked edges (risk >= 70 or active severe reports) receive high penalty
             if risk_score >= 70.0 or active_rep_count > 0:
                 cost_weight = dist * 40.0 + 1500.0
@@ -255,15 +273,42 @@ class GraphEngine:
             self.graph.add_edge(edge['u'], edge['v'], **edge_attrs)
             evaluated_edges.append(edge_attrs)
             
+        self._cached_graph_edges[cache_key] = evaluated_edges
         return evaluated_edges
 
     def get_accessibility_graph(self, horizon=None):
-        """Returns nodes and evaluated edges ready for Leaflet map & UI."""
+        """Returns nodes and evaluated edges ready for Leaflet map & UI with real reachability status."""
+        cache_key = str(horizon)
+        if cache_key in self._cached_accessibility:
+            return self._cached_accessibility[cache_key]
+
+        from .isolation_engine import IsolationEngine
         evaluated_edges = self.rebuild_graph(horizon=horizon)
-        return {
-            'nodes': [n for n_id, n in self.nodes.items() if not n_id.startswith('_')],
+        iso_data = IsolationEngine.compute_isolation_index(horizon=horizon)
+        node_status_map = {s['node_id']: s for s in iso_data.get('settlements', [])}
+        
+        enriched_nodes = []
+        for n_id, n in self.nodes.items():
+            if n_id.startswith('_'):
+                continue
+            s_info = node_status_map.get(n_id, {})
+            enriched_nodes.append({
+                **n,
+                'status': s_info.get('status', 'REACHABLE'),
+                'status_color': s_info.get('status_color', '#10b981'),
+                'min_hub_hops': s_info.get('min_hub_hops', 0),
+                'isolation_duration_hours': s_info.get('isolation_duration_hours', 0),
+                'isolation_reason': s_info.get('isolation_reason', ''),
+                'incident_risk_max': s_info.get('incident_risk_max', 0.0),
+                'incident_risk_avg': s_info.get('incident_risk_avg', 0.0)
+            })
+
+        result = {
+            'nodes': enriched_nodes,
             'edges': evaluated_edges
         }
+        self._cached_accessibility[cache_key] = result
+        return result
 
     def compute_route(self, from_node, to_node, priority='FOOD_RATION', horizon=None):
         """
@@ -409,8 +454,16 @@ class GraphEngine:
                 if not display_names or display_names[-1] != name:
                     display_names.append(name)
 
-        if len(display_names) > 7:
-            display_names = display_names[:3] + ['...'] + display_names[-3:]
+        # Ensure geometry begins precisely at origin and ends precisely at destination
+        start_pt = [self.nodes[path_nodes[0]]['lat'], self.nodes[path_nodes[0]]['lon']]
+        end_pt = [self.nodes[path_nodes[-1]]['lat'], self.nodes[path_nodes[-1]]['lon']]
+        if not all_coords:
+            all_coords = [start_pt, end_pt]
+        else:
+            if all_coords[0] != start_pt:
+                all_coords.insert(0, start_pt)
+            if all_coords[-1] != end_pt:
+                all_coords.append(end_pt)
 
         return {
             'node_sequence': path_nodes,

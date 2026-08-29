@@ -1,14 +1,27 @@
+import os
+import joblib
 import numpy as np
 from sklearn.ensemble import GradientBoostingRegressor
 from .data_loader import load_historical_disruptions
 
 class RiskScoringModel:
-    def __init__(self):
-        self.model = GradientBoostingRegressor(n_estimators=60, learning_rate=0.08, max_depth=3, random_state=42)
+    def __init__(self, pkl_path='models/risk_model.pkl'):
+        self.pkl_path = pkl_path
+        self.model = None
         self.is_trained = False
-        self._train_initial_model()
+        self._load_or_train_model()
 
-    def _train_initial_model(self):
+    def _load_or_train_model(self):
+        """Loads pre-trained model from PKL file or trains if not found."""
+        if os.path.exists(self.pkl_path):
+            try:
+                self.model = joblib.load(self.pkl_path)
+                self.is_trained = True
+                return
+            except Exception as e:
+                print(f"Failed to load {self.pkl_path}, retraining: {e}")
+
+        # Train and serialize if PKL not found
         records = load_historical_disruptions()
         if not records:
             return
@@ -27,8 +40,14 @@ class RiskScoringModel:
             
         X = np.array(X)
         y = np.array(y)
+        self.model = GradientBoostingRegressor(n_estimators=100, learning_rate=0.06, max_depth=3, random_state=42)
         self.model.fit(X, y)
         self.is_trained = True
+        try:
+            os.makedirs(os.path.dirname(self.pkl_path), exist_ok=True)
+            joblib.dump(self.model, self.pkl_path)
+        except Exception:
+            pass
 
     def calculate_risk(self, edge, district_weather, active_reports=0, horizon=None):
         """
