@@ -113,6 +113,22 @@ class PathNERTestCase(unittest.TestCase):
             self.assertIn('advisory', data)
             self.assertTrue(len(data['advisory']) > 0)
 
+    def test_api_ai_chat(self):
+        # Test query to chatbot in 4 languages
+        for lang in ['en', 'as', 'bn', 'hi']:
+            res = self.client.post('/api/v1/ai/chat', json={
+                'message': 'NH-6 status',
+                'chat_history': [],
+                'language': lang
+            })
+            self.assertEqual(res.status_code, 200)
+            data = res.get_json()
+            self.assertEqual(data['status'], 'success')
+            self.assertEqual(data['language'], lang)
+            self.assertIn('reply', data)
+            self.assertTrue(len(data['reply']) > 0)
+
+
     def test_pkl_model_loading(self):
         import os
         import joblib
