@@ -136,26 +136,6 @@ def load_edges():
 
     with open(edges_file, mode='r', encoding='utf-8') as f:
         reader = csv.DictReader(f)
-<<<<<<< HEAD
-        for row in reader:
-            # Parse geometry string: "LINESTRING (x1 y1, x2 y2, ...)"
-            coords = []
-            if row.get('geometry'):
-                geom_str = row['geometry'].strip()
-                # Extract coordinates from LINESTRING format
-                if geom_str.startswith('LINESTRING'):
-                    # Remove "LINESTRING (" and trailing ")"
-                    coords_str = geom_str.replace('LINESTRING (', '').replace(')', '').strip()
-                    # Split by commas to get individual points
-                    for pt in coords_str.split(','):
-                        parts = pt.strip().split()
-                        if len(parts) == 2:
-                            try:
-                                x, y = float(parts[0]), float(parts[1])
-                                coords.append([y, x])  # Convert x,y to lat,lon format
-                            except ValueError:
-                                pass
-=======
         for idx, row in enumerate(reader):
             edge_id = row.get('edge_id') or row.get('id') or f'osm_edge_{idx+1:04d}'
             u_str = row.get('u', '')
@@ -186,7 +166,6 @@ def load_edges():
             road_ref = row.get('ref', '').strip() if row.get('ref') else ''
             raw_name = row.get('name', '').strip() if row.get('name') else ''
             road_type = row.get('road_type', 'tertiary')
->>>>>>> 5063b92bb14456dfd24938a11c4a78821c17a271
             
             if raw_name:
                 display_name = raw_name
