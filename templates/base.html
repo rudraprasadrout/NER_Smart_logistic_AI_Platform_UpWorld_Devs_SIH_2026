@@ -85,6 +85,69 @@
     {% block content %}{% endblock %}
   </main>
 
+  <!-- PathNER Drishti Tactical Copilot Widget -->
+  <div class="ai-chat-widget">
+    <!-- Chat Drawer Window -->
+    <div id="ai-chat-window" class="ai-chat-window">
+      <!-- Header with Language Selector -->
+      <div class="ai-chat-header">
+        <div class="ai-chat-header-top">
+          <div class="ai-chat-header-info">
+            <div class="ai-chat-header-avatar">
+              <img src="{{ url_for('static', filename='images/emblem_badge.png') }}" alt="Drishti Copilot">
+            </div>
+            <div>
+              <div class="ai-chat-header-name">Drishti Copilot (দৃষ্টি / दृष्टि)</div>
+              <div class="ai-chat-header-status">Live Logistics Telemetry</div>
+            </div>
+          </div>
+          <button id="ai-chat-close-btn" class="ai-chat-close-btn" title="Close console">
+            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+          </button>
+        </div>
+
+        <!-- In-Drawer Multilingual Switcher -->
+        <div class="drishti-lang-tabs" id="drishti-lang-tabs">
+          <button class="drishti-lang-tab active" data-lang="en">EN</button>
+          <button class="drishti-lang-tab" data-lang="as">অসমীয়া</button>
+          <button class="drishti-lang-tab" data-lang="bn">বাংলা</button>
+          <button class="drishti-lang-tab" data-lang="hi">हिन्दी</button>
+        </div>
+      </div>
+
+      <!-- Quick Suggestion Chips -->
+      <div id="ai-chat-chips" class="ai-chat-chips">
+        <button class="ai-chip" data-prompt="Is NH-6 open for heavy supply trucks?" id="chip-nh6">NH-6 Passability</button>
+        <button class="ai-chip" data-prompt="What is the safest bypass route from Guwahati to Silchar?" id="chip-route">Silchar Safe Bypass</button>
+        <button class="ai-chip" data-prompt="Which settlements are isolated right now?" id="chip-isolated">Severed Hamlets</button>
+        <button class="ai-chip" data-prompt="How do I submit an incident report offline?" id="chip-offline">Offline Field Sync</button>
+      </div>
+
+      <!-- Messages Stream -->
+      <div id="ai-chat-messages" class="ai-chat-messages"></div>
+
+      <!-- Input Bar -->
+      <div class="ai-chat-input-bar">
+        <input type="text" id="ai-chat-input" class="ai-chat-input" placeholder="Ask about NH-6, bypass routes, landslides..." autocomplete="off">
+        <button id="ai-chat-send-btn" class="ai-chat-send-btn" title="Transmit query">
+          <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="22" y1="2" x2="11" y2="13"/><polygon points="22 2 15 22 11 13 2 9 22 2"/></svg>
+        </button>
+      </div>
+    </div>
+
+    <!-- High-Visibility Floating Toggle Launcher Button -->
+    <div id="ai-chat-launcher" class="ai-chat-launcher">
+      <div class="ai-launcher-icon-wrap">
+        <img src="{{ url_for('static', filename='images/emblem_badge.png') }}" alt="PathNER Copilot">
+        <div class="ai-launcher-pulse"></div>
+      </div>
+      <div class="ai-launcher-text">
+        <span class="ai-launcher-title">Drishti <span>Copilot</span></span>
+        <span class="ai-launcher-sub">Live Telemetry (4 Languages)</span>
+      </div>
+    </div>
+  </div>
+
   <footer class="app-footer">
     <span>Assam &rarr; Meghalaya Lifeline &middot; Guwahati &mdash; Shillong &mdash; Silchar</span>
     <span>Multi-hop Graph Analysis &middot; 72h Forecast &middot; Offline-First Sync</span>
