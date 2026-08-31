@@ -245,8 +245,8 @@ class GraphEngine:
             dist = edge.get('distance_km', 10.0)
             speed = max(15.0, edge.get('avg_speed_kmh', 45.0))
             
-            # Blocked edges (risk >= 70 or active severe reports) receive high penalty
-            if risk_score >= 70.0 or active_rep_count > 0:
+            # Blocked edges (risk >= 50 or active severe reports) receive high penalty
+            if risk_eval.get('is_blocked', False) or risk_score >= 50.0 or active_rep_count > 0:
                 cost_weight = dist * 40.0 + 1500.0
                 is_blocked = True
             else:

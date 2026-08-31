@@ -21,10 +21,11 @@ class RiskScoringModel:
             except Exception as e:
                 print(f"Failed to load {self.pkl_path}, retraining: {e}")
 
-        # Train and serialize if PKL not found
+    def retrain_model(self):
+        """Retrains the Gradient Boosting ML model using the latest historical records."""
         records = load_historical_disruptions()
         if not records:
-            return
+            return False
         
         X = []
         y = []
@@ -33,21 +34,22 @@ class RiskScoringModel:
                 r['rainfall_24h_mm'],
                 r['slope_deg'],
                 r['soil_saturation'],
-                r['base_vulnerability'],
-                r['active_reports_count']
+                r['base_vulnerability']
             ])
             y.append(r['disruption_level'])
             
-        X = np.array(X)
-        y = np.array(y)
-        self.model = GradientBoostingRegressor(n_estimators=100, learning_rate=0.06, max_depth=3, random_state=42)
+        X = np.array(X, dtype=np.float32)
+        y = np.array(y, dtype=np.float32)
+        self.model = GradientBoostingRegressor(n_estimators=120, learning_rate=0.05, max_depth=4, random_state=42)
         self.model.fit(X, y)
         self.is_trained = True
         try:
             os.makedirs(os.path.dirname(self.pkl_path), exist_ok=True)
             joblib.dump(self.model, self.pkl_path)
+            print(f"[RiskModel] Retrained Gradient Boosting Model on {len(records)} historical records.")
         except Exception:
             pass
+        return True
 
     def calculate_risk_batch(self, edges, district_weather_map, field_reports_map=None, horizon=None):
         """
@@ -59,7 +61,8 @@ class RiskScoringModel:
         
         field_reports_map = field_reports_map or {}
         n = len(edges)
-        X = np.empty((n, 5), dtype=np.float32)
+        X = np.empty((n, 4), dtype=np.float32)
+        reports_counts = np.zeros(n, dtype=np.float32)
 
         edge_meta = []
         for i, edge in enumerate(edges):
@@ -87,25 +90,24 @@ class RiskScoringModel:
             X[i, 1] = slope
             X[i, 2] = soil
             X[i, 3] = base_vuln
-            X[i, 4] = active_reports
+            reports_counts[i] = active_reports
             edge_meta.append((rainfall, slope, soil, base_vuln, active_reports))
 
         if self.is_trained:
             preds_raw = self.model.predict(X)
         else:
-            preds_raw = (X[:, 0] * 0.4) + (X[:, 1] * 1.5) + (X[:, 2] * 25.0) + (X[:, 3] * 30.0) + (X[:, 4] * 15.0)
+            preds_raw = (X[:, 0] * 0.4) + (X[:, 1] * 1.5) + (X[:, 2] * 25.0) + (X[:, 3] * 30.0)
 
-        # Dynamic report boost
-        reports_col = X[:, 4]
-        preds_raw += reports_col * 12.0
+        # Active ground truth field report multiplier
+        preds_raw += reports_counts * 15.0
         risk_scores = np.clip(preds_raw, 0.0, 100.0).round(1)
 
         results = []
         for i in range(n):
             r_score = float(risk_scores[i])
-            if r_score >= 70.0:
+            if r_score >= 55.0:
                 status, severity = 'blocked', 'Critical'
-            elif r_score >= 50.0:
+            elif r_score >= 45.0:
                 status, severity = 'high_risk', 'Severe'
             elif r_score >= 25.0:
                 status, severity = 'moderate_risk', 'Caution'
@@ -146,15 +148,15 @@ class RiskScoringModel:
         slope = edge['slope_deg']
         base_vuln = edge['base_vulnerability']
         
-        feat = np.array([[rainfall, slope, soil, base_vuln, active_reports]], dtype=np.float32)
+        feat = np.array([[rainfall, slope, soil, base_vuln]], dtype=np.float32)
         
         if self.is_trained:
             pred_raw = float(self.model.predict(feat)[0])
         else:
-            pred_raw = (rainfall * 0.4) + (slope * 1.5) + (soil * 25.0) + (base_vuln * 30.0) + (active_reports * 15.0)
+            pred_raw = (rainfall * 0.4) + (slope * 1.5) + (soil * 25.0) + (base_vuln * 30.0)
             
         if active_reports > 0:
-            pred_raw += active_reports * 12.0
+            pred_raw += active_reports * 15.0
 
         risk_score = round(max(0.0, min(100.0, pred_raw)), 1)
         

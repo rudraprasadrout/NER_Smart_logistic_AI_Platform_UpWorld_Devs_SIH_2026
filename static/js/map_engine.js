@@ -515,8 +515,27 @@ class MapEngine {
     }
   }
 
-  zoomToNode(lat, lon) {
-    if (this.map) this.map.flyTo([lat, lon], 12, { animate: true, duration: 0.8 });
+  zoomToNode(lat, lon, name = '', info = '') {
+    if (!this.map) return;
+    this.map.flyTo([lat, lon], 13, { animate: true, duration: 0.8 });
+    
+    // Remove prior focus highlight
+    if (this._focusMarker) {
+      this.map.removeLayer(this._focusMarker);
+      this._focusMarker = null;
+    }
+
+    const pulseIcon = L.divIcon({
+      className: 'pulse-focus-marker',
+      html: '<div style="width:24px;height:24px;border-radius:50%;background:rgba(239,68,68,0.4);border:2px solid #ef4444;box-shadow:0 0 16px #ef4444;animation:kpiPulse 1.2s infinite alternate;"></div>',
+      iconSize: [24, 24],
+      iconAnchor: [12, 12]
+    });
+
+    this._focusMarker = L.marker([lat, lon], { icon: pulseIcon }).addTo(this.map);
+    if (name) {
+      this._focusMarker.bindPopup(`<b>${name}</b><br><small>${info}</small>`).openPopup();
+    }
   }
 }
 

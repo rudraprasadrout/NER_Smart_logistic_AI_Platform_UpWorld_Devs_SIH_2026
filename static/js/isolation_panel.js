@@ -67,7 +67,9 @@ class IsolationPanel {
 
     el.querySelectorAll('.s-card').forEach(card => {
       card.addEventListener('click', () => {
-        window.mapEngine?.zoomToNode(+card.dataset.lat, +card.dataset.lon);
+        const name = card.querySelector('.s-card-name')?.textContent || '';
+        const meta = card.querySelector('.s-card-meta')?.textContent || '';
+        window.mapEngine?.zoomToNode(+card.dataset.lat, +card.dataset.lon, name, meta);
       });
     });
   }
