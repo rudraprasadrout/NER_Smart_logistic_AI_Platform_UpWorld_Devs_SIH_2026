@@ -265,4 +265,19 @@
 
     return text;
   }
+
+  // Global helper for triggering Drishti AI copilot from external widgets
+  window.openDrishtiWithPrompt = function(promptText) {
+    const windowEl = document.getElementById('ai-chat-window');
+    const input = document.getElementById('ai-chat-input');
+    if (windowEl) {
+      windowEl.classList.add('open');
+      if (input && promptText) {
+        input.value = promptText;
+        handleSend();
+      } else if (input) {
+        input.focus();
+      }
+    }
+  };
 })();

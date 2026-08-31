@@ -7,7 +7,7 @@ class PathNERTestCase(unittest.TestCase):
         self.client = self.app.test_client()
 
     def test_pages_render(self):
-        pages = ['/', '/routes', '/field-reporter', '/disaster-mode']
+        pages = ['/', '/dashboard', '/routes', '/field-reporter', '/disaster-mode']
         for page in pages:
             res = self.client.get(page)
             self.assertEqual(res.status_code, 200, f"Failed rendering {page}")

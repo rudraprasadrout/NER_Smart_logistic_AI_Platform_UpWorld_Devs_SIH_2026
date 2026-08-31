@@ -1,0 +1,101 @@
+{% extends "base.html" %}
+
+{% block title %}PathNER — Smart Logistics & Disaster Resilience for Northeast India{% endblock %}
+
+{% block extra_css %}
+<link rel="stylesheet" href="{{ url_for('static', filename='css/landing.css') }}">
+{% endblock %}
+
+{% block content %}
+<div class="portal-container">
+
+  <!-- ═════════════════════════════════════════════════════════════════════════
+       EXECUTIVE HERO COMMAND GATEWAY (ZOOMED & PROPORTIONED)
+       ═════════════════════════════════════════════════════════════════════════ -->
+  <section class="hero-section">
+    <div class="hero-content">
+      <!-- Left Column: Problem Statement & Mission Launch -->
+      <div class="hero-left">
+        <div class="hero-meta-bar">
+          <span class="tag-live-engine">
+            <span class="monitor-dot"></span>
+            LIVE SPATIAL GRAPH ENGINE
+          </span>
+          <span class="tag-sih-badge">
+            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg>
+            SIH 2026 &middot; Problem ID: 26028
+          </span>
+          <span class="tag-team-badge">
+            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
+            Team: UpWorld Devs
+          </span>
+        </div>
+
+        <h1 class="hero-title">
+          Smart Logistics &amp;<br>
+          Disaster Resilience for<br>
+          <span class="accent-highlight">Northeast India</span>
+        </h1>
+
+        <p class="hero-description">
+          Predicting mountain road disruptions before they happen. PathNER models transport lifelines across all 8 NER states as a live, risk-scored accessibility graph to protect essential supply chains and isolated communities.
+        </p>
+
+        <div class="hero-actions">
+          <a href="{{ url_for('dashboard') }}" class="btn-command-primary">
+            <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect width="7" height="9" x="3" y="3" rx="1"/><rect width="7" height="5" x="14" y="3" rx="1"/><rect width="7" height="9" x="14" y="12" rx="1"/><rect width="7" height="5" x="3" y="16" rx="1"/></svg>
+            <span>Open Control Room</span>
+          </a>
+          <a href="{{ url_for('route_planner') }}" class="btn-command-secondary">
+            <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="6" cy="19" r="3"/><path d="M9 19h8.5a3.5 3.5 0 0 0 0-7h-11a3.5 3.5 0 0 1 0-7H15"/><circle cx="18" cy="5" r="3"/></svg>
+            <span>Route Dispatch</span>
+          </a>
+          <a href="{{ url_for('disaster_view') }}" class="btn-command-danger">
+            <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/></svg>
+            <span>Emergency Protocol</span>
+          </a>
+        </div>
+
+        <!-- Metric Grid -->
+        <div class="hero-metrics-bar">
+          <div class="metric-cell">
+            <span class="metric-val states">8 / 8</span>
+            <span class="metric-title">SISTER STATES</span>
+          </div>
+          <div class="metric-cell">
+            <span class="metric-val corridors">34+</span>
+            <span class="metric-title">LIFELINE CORRIDORS</span>
+          </div>
+          <div class="metric-cell">
+            <span class="metric-val horizon">72h</span>
+            <span class="metric-title">FORECAST HORIZON</span>
+          </div>
+          <div class="metric-cell">
+            <span class="metric-val offline">0 KB</span>
+            <span class="metric-title">OFFLINE PWA SYNC</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- Right Column: Large Platform Emblem Showcase Display -->
+      <div class="hero-right">
+        <div class="hero-showcase-panel">
+          <div class="showcase-emblem-container">
+            <img src="{{ url_for('static', filename='images/logo_transparent.png') }}" alt="PathNER Emblem" class="showcase-emblem-img">
+          </div>
+          <div class="showcase-title-line">
+            Path<span style="color:#f59e0b">NER</span> Logistics Intelligence
+          </div>
+          <div class="showcase-sub-line">
+            Spatial Graph Engine &middot; Real-Time Telemetry &middot; Offline Sync
+          </div>
+          <div class="showcase-team-tag">
+            <span>Built with precision by UpWorld Devs</span>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+</div>
+{% endblock %}

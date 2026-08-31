@@ -27,6 +27,10 @@ def create_app():
     # Frontend View Routes
     @app.route('/')
     def index():
+        return render_template('landing.html', active_page='home')
+
+    @app.route('/dashboard')
+    def dashboard():
         return render_template('dashboard.html', active_page='dashboard')
 
     @app.route('/routes')

@@ -23,18 +23,24 @@
 <body>
 
   <header class="app-header">
-    <a href="{{ url_for('index') }}" class="brand-section" style="display:flex;align-items:center;gap:12px;text-decoration:none">
-      <img src="{{ url_for('static', filename='images/logo_transparent.png') }}" alt="PathNER AI Logo" style="height:44px;width:44px;object-fit:contain;flex-shrink:0;border-radius:50%;border:1.5px solid rgba(245,158,11,0.3);background:rgba(255,255,255,0.04);padding:2px;">
+    <a href="{{ url_for('index') }}" class="brand-section" style="display:flex;align-items:center;gap:10px;text-decoration:none">
+      <img src="{{ url_for('static', filename='images/emblem_badge.png') }}" alt="PathNER Logo" style="height:38px;width:38px;object-fit:contain;flex-shrink:0;border-radius:50%;">
       <div style="display:flex;flex-direction:column;line-height:1.15">
         <span style="font-weight:900;font-size:18px;letter-spacing:-0.5px;color:var(--text-heading)">Path<span style="color:#f59e0b">NER</span></span>
-        <span style="font-size:9px;font-weight:800;letter-spacing:1.2px;color:var(--status-safe);text-transform:uppercase">Smart Logistics AI</span>
+        <span style="font-size:9px;font-weight:800;letter-spacing:1.2px;color:var(--status-safe);text-transform:uppercase">Smart Logistics Platform</span>
       </div>
     </a>
 
     <nav>
       <ul class="nav-links">
-        <li class="nav-item {% if active_page == 'dashboard' %}active{% endif %}">
+        <li class="nav-item {% if active_page == 'home' %}active{% endif %}">
           <a href="{{ url_for('index') }}" style="display:flex;align-items:center;gap:6px">
+            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m3 9 9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg>
+            <span>Overview</span>
+          </a>
+        </li>
+        <li class="nav-item {% if active_page == 'dashboard' %}active{% endif %}">
+          <a href="{{ url_for('dashboard') }}" style="display:flex;align-items:center;gap:6px">
             <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect width="7" height="9" x="3" y="3" rx="1"/><rect width="7" height="5" x="14" y="3" rx="1"/><rect width="7" height="9" x="14" y="12" rx="1"/><rect width="7" height="5" x="3" y="16" rx="1"/></svg>
             <span>Control Room</span>
           </a>
@@ -78,69 +84,6 @@
   <main class="app-main">
     {% block content %}{% endblock %}
   </main>
-
-  <!-- PathNER Drishti AI Floating Copilot Widget -->
-  <div class="ai-chat-widget">
-    <!-- Chat Drawer Window -->
-    <div id="ai-chat-window" class="ai-chat-window">
-      <!-- Header with Language Selector -->
-      <div class="ai-chat-header">
-        <div class="ai-chat-header-top">
-          <div class="ai-chat-header-info">
-            <div class="ai-chat-header-avatar">
-              <img src="{{ url_for('static', filename='images/logo_transparent.png') }}" alt="Drishti AI">
-            </div>
-            <div>
-              <div class="ai-chat-header-name">Drishti AI (দৃষ্টি / दृष्टि)</div>
-              <div class="ai-chat-header-status">Live Logistics Telemetry</div>
-            </div>
-          </div>
-          <button id="ai-chat-close-btn" class="ai-chat-close-btn" title="Close console">
-            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
-          </button>
-        </div>
-
-        <!-- In-Drawer Multilingual Switcher -->
-        <div class="drishti-lang-tabs" id="drishti-lang-tabs">
-          <button class="drishti-lang-tab active" data-lang="en">EN</button>
-          <button class="drishti-lang-tab" data-lang="as">অসমীয়া</button>
-          <button class="drishti-lang-tab" data-lang="bn">বাংলা</button>
-          <button class="drishti-lang-tab" data-lang="hi">हिन्दी</button>
-        </div>
-      </div>
-
-      <!-- Quick Suggestion Chips -->
-      <div id="ai-chat-chips" class="ai-chat-chips">
-        <button class="ai-chip" data-prompt="Is NH-6 open for heavy supply trucks?" id="chip-nh6">NH-6 Passability</button>
-        <button class="ai-chip" data-prompt="What is the safest bypass route from Guwahati to Silchar?" id="chip-route">Silchar Safe Bypass</button>
-        <button class="ai-chip" data-prompt="Which settlements are isolated right now?" id="chip-isolated">Severed Hamlets</button>
-        <button class="ai-chip" data-prompt="How do I submit an incident report offline?" id="chip-offline">Offline Field Sync</button>
-      </div>
-
-      <!-- Messages Stream -->
-      <div id="ai-chat-messages" class="ai-chat-messages"></div>
-
-      <!-- Input Bar -->
-      <div class="ai-chat-input-bar">
-        <input type="text" id="ai-chat-input" class="ai-chat-input" placeholder="Ask Drishti AI about routes, NH-6, landslides..." autocomplete="off">
-        <button id="ai-chat-send-btn" class="ai-chat-send-btn" title="Transmit query">
-          <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="22" y1="2" x2="11" y2="13"/><polygon points="22 2 15 22 11 13 2 9 22 2"/></svg>
-        </button>
-      </div>
-    </div>
-
-    <!-- High-Visibility Floating Toggle Launcher Button -->
-    <div id="ai-chat-launcher" class="ai-chat-launcher">
-      <div class="ai-launcher-icon-wrap">
-        <img src="{{ url_for('static', filename='images/logo_transparent.png') }}" alt="PathNER AI">
-        <div class="ai-launcher-pulse"></div>
-      </div>
-      <div class="ai-launcher-text">
-        <span class="ai-launcher-title">Drishti <span>AI</span></span>
-        <span class="ai-launcher-sub">Tactical Copilot (Live)</span>
-      </div>
-    </div>
-  </div>
 
   <footer class="app-footer">
     <span>Assam &rarr; Meghalaya Lifeline &middot; Guwahati &mdash; Shillong &mdash; Silchar</span>
