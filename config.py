@@ -21,7 +21,6 @@ class Config:
     DATA_DIR_NAME = os.environ.get('DATA_DIR', 'data')
     DATA_DIR = os.path.join(BASE_DIR, DATA_DIR_NAME)
     DATABASE_PATH = os.path.join(BASE_DIR, os.environ.get('DATABASE_PATH', 'data/database.sqlite'))
-    RISK_MODEL_PATH = os.path.join(BASE_DIR, os.environ.get('RISK_MODEL_PATH', 'models/risk_model.pkl'))
     
     # Risk calculation thresholds
     RISK_BLOCKED_THRESHOLD = float(os.environ.get('RISK_BLOCKED_THRESHOLD', 70.0))

@@ -50,4 +50,4 @@ print(f"R-squared: {r2_score(y_test, y_pred):.4f}")
 print(f"RMSE: {root_mean_squared_error(y_test, y_pred):.4f}")
 
 # 8. Export the trained pipeline to a .pkl file
-joblib.dump(pipeline, 'models/disruption_model.pkl')
+joblib.dump(pipeline, 'disruption_model.pkl')
