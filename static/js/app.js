@@ -26,6 +26,30 @@ document.addEventListener('DOMContentLoaded', () => {
 
 async function initDashboard() {
   try {
+    // 1. INSTANT ZERO-LATENCY LOAD: Render from client-side IndexedDB cache immediately if available
+    if (window.offlineCache) {
+      const [cGraph, cIso, cForecast] = await Promise.all([
+        window.offlineCache.get('graph_accessibility'),
+        window.offlineCache.get('iso_current'),
+        window.offlineCache.get('forecast_timeline')
+      ]);
+
+      if (cGraph && cGraph.status === 'success' && !isGraphInitialized) {
+        window.mapEngine.renderAccessibilityGraph(cGraph, showEdgeDrawer);
+        isGraphInitialized = true;
+      }
+      if (cIso && cIso.status === 'success') {
+        cachedIsolationByHorizon['current'] = cIso;
+        window.isolationPanel.render(cIso);
+        window.mapEngine.updateNodeStatuses(cIso.settlements);
+      }
+      if (cForecast && cForecast.status === 'success') {
+        cachedForecastTimeline = cForecast.timeline;
+        window.forecastChart?.renderChart(cForecast.timeline);
+      }
+    }
+
+    // 2. PARALLEL NETWORK FETCH with HTTP Gzip compression
     const [graphRes, isoRes, forecastRes] = await Promise.all([
       fetch('/api/v1/graph/accessibility?horizon=current'),
       fetch('/api/v1/isolation-index?horizon=current'),
@@ -36,31 +60,39 @@ async function initDashboard() {
     const forecastData = await forecastRes.json();
 
     if (graphData.status === 'success') {
+      window.offlineCache?.set('graph_accessibility', graphData);
       window.mapEngine.renderAccessibilityGraph(graphData, showEdgeDrawer);
       isGraphInitialized = true;
     }
     if (isoData.status === 'success') {
+      window.offlineCache?.set('iso_current', isoData);
       cachedIsolationByHorizon['current'] = isoData;
       window.isolationPanel.render(isoData);
       window.mapEngine.updateNodeStatuses(isoData.settlements);
     }
     if (forecastData.status === 'success') {
+      window.offlineCache?.set('forecast_timeline', forecastData);
       cachedForecastTimeline = forecastData.timeline;
       if (window.forecastChart) {
         window.forecastChart.renderChart(forecastData.timeline);
       }
     }
 
-    // Pre-warm 24h, 48h, 72h isolation states in background for 0ms transitions
+    // 3. Pre-warm 24h, 48h, 72h isolation states in background
     ['24h', '48h', '72h'].forEach(h => {
       fetch(`/api/v1/isolation-index?horizon=${h}`)
         .then(r => r.json())
-        .then(d => { if (d.status === 'success') cachedIsolationByHorizon[h] = d; })
+        .then(d => {
+          if (d.status === 'success') {
+            cachedIsolationByHorizon[h] = d;
+            window.offlineCache?.set('iso_' + h, d);
+          }
+        })
         .catch(() => {});
     });
 
   } catch (err) {
-    console.error('Dashboard load error:', err);
+    console.warn('[PathNER] Operating in local offline mode:', err);
   }
 }
 

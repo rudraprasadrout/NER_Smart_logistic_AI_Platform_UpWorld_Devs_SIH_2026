@@ -1,5 +1,5 @@
 import os
-from flask import Flask, render_template
+from flask import Flask, render_template, request
 from flask_cors import CORS
 from config import Config
 
@@ -40,6 +40,29 @@ def create_app():
     @app.route('/disaster-mode')
     def disaster_view():
         return render_template('disaster_view.html', active_page='disaster')
+
+    # Automatic High-Speed Gzip Compression Middleware for Low-Network Operation
+    @app.after_request
+    def compress_response(response):
+        accept_encoding = request.headers.get('Accept-Encoding', '')
+        if 'gzip' not in accept_encoding.lower() or response.status_code < 200 or response.status_code >= 300:
+            return response
+        if response.direct_passthrough or 'Content-Encoding' in response.headers:
+            return response
+        
+        content_type = response.headers.get('Content-Type', '')
+        if any(ct in content_type for ct in ['application/json', 'text/', 'application/javascript']):
+            data = response.get_data()
+            if len(data) > 400:
+                from io import BytesIO
+                import gzip
+                gzip_buffer = BytesIO()
+                with gzip.GzipFile(mode='wb', fileobj=gzip_buffer, compresslevel=6) as gzip_file:
+                    gzip_file.write(data)
+                response.set_data(gzip_buffer.getvalue())
+                response.headers['Content-Encoding'] = 'gzip'
+                response.headers['Content-Length'] = len(response.get_data())
+        return response
 
     return app
 
