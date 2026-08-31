@@ -294,54 +294,47 @@ class MapEngine {
       this.edges[e.id] = { casing, line };
     });
 
-    // 2. Render Network Nodes with GPU Canvas & Strategic DOM Badges
+    // 2. Render Network Nodes with GPU Canvas & Strategic Regional Hub Badges
     data.nodes.forEach(n => {
       const isHub = n.type === 'supply_hub' || Boolean(n.alias && n.alias.includes('hub'));
       const status = n.status || 'REACHABLE';
       const isIsolated = status === 'ISOLATED';
       const isAtRisk = status === 'AT_RISK';
-      const isProminent = isHub || isIsolated || Boolean(n.alias);
 
-      if (isProminent) {
-        // High-visibility DOM Badges for Hubs and Critical Chokepoints
-        let cls = isHub ? 'm-hub' : (isIsolated ? 'm-isolated' : 'm-at-risk');
-        let label = isHub ? 'H' : (isIsolated ? '!' : '▲');
-        let size = isHub ? [28, 28] : [20, 20];
-
+      if (isHub) {
+        // High-visibility Strategic DOM Badges exclusively for Regional Supply Hubs
         const icon = L.divIcon({
-          className: `node-marker ${cls}`,
-          html: `<span style="font-size:${isHub ? 12 : 10}px;font-weight:900;color:#ffffff;line-height:1">${label}</span>`,
-          iconSize: size, 
-          iconAnchor: [size[0]/2, size[1]/2]
+          className: 'node-marker m-hub',
+          html: `<span style="font-size:12px;font-weight:900;color:#ffffff;line-height:1">H</span>`,
+          iconSize: [26, 26], 
+          iconAnchor: [13, 13]
         });
 
         const marker = L.marker([n.lat, n.lon], { icon }).addTo(this.map);
-        marker._isHub = isHub;
-        marker._isAlert = isIsolated || isAtRisk;
+        marker._isHub = true;
+        marker._isAlert = false;
 
         marker.bindTooltip(
-          `<div style="font-weight:700;font-size:11px">${n.name}</div>` +
-          `<div style="font-size:10px;color:#94a3b8">${n.district} · <span style="color:${isIsolated ? '#ef4444' : isAtRisk ? '#f59e0b' : '#10b981'}">${status}</span></div>`,
+          `<div style="font-weight:800;font-size:12px">${n.name} (Strategic Hub)</div>` +
+          `<div style="font-size:10px;color:#818cf8">${n.district} · Supply Depot</div>`,
           { sticky: true }
         );
         marker.bindPopup(
           `<div class="popup-name">${n.name}</div>` +
           `<div class="popup-district">${n.district}, ${n.state}</div>` +
-          `<div class="popup-stat"><span>Reachability:</span> <span class="tag tag-${isIsolated ? 'danger' : isAtRisk ? 'warn' : 'safe'}">${status}</span></div>` +
-          `<div class="popup-stat"><span>Hub Distance:</span> <b>${n.min_hub_hops >= 0 ? n.min_hub_hops + ' hops' : 'Cut off (Unreachable)'}</b></div>` +
-          `<div class="popup-stat"><span>Population:</span> <b>${n.population ? n.population.toLocaleString() : 'N/A'}</b></div>` +
-          `<div class="popup-stat"><span>Supply Buffer:</span> <b>${n.buffer_days || '—'} days</b></div>` +
-          (n.isolation_reason ? `<div class="popup-desc">${n.isolation_reason}</div>` : '') +
-          `<div style="margin-top:8px;text-align:right"><a href="/routes?to=${n.id}" class="btn btn-accent" style="font-size:10px;padding:3px 8px">Dispatch Relief &rarr;</a></div>`
+          `<div class="popup-stat"><span>Facility:</span> <span class="tag tag-neutral">Strategic Supply Hub</span></div>` +
+          `<div class="popup-stat"><span>Stock Readiness:</span> <b>Optimal (100%)</b></div>` +
+          `<div class="popup-stat"><span>Population Served:</span> <b>${n.population ? n.population.toLocaleString() : 'Regional'}</b></div>` +
+          `<div style="margin-top:8px;text-align:right"><a href="/routes?from=${n.id}" class="btn btn-accent" style="font-size:10px;padding:3px 8px">Dispatch Relief Convoys &rarr;</a></div>`
         );
 
         this.nodes[n.id] = marker;
       } else {
-        // Fast Hardware-Accelerated GPU Canvas Circle Markers for all network points
+        // Clean, High-Performance GPU Canvas Circle Markers for all network points & settlements
         // Status color: REACHABLE = Emerald (#10b981), AT_RISK = Amber (#f59e0b), ISOLATED = Red (#ef4444)
         const fillColor = isIsolated ? '#ef4444' : (isAtRisk ? '#f59e0b' : '#10b981');
         const strokeColor = isIsolated ? '#7f1d1d' : (isAtRisk ? '#78350f' : '#064e3b');
-        const radius = isIsolated ? 4.5 : (isAtRisk ? 3.8 : 2.8);
+        const radius = isIsolated ? 3.6 : (isAtRisk ? 3.0 : 2.2);
 
         const circle = L.circleMarker([n.lat, n.lon], {
           renderer,
@@ -349,7 +342,7 @@ class MapEngine {
           color: strokeColor,
           weight: 1,
           fillColor,
-          fillOpacity: 0.85
+          fillOpacity: 0.9
         }).addTo(this.map);
 
         circle.bindTooltip(
@@ -361,6 +354,9 @@ class MapEngine {
           `<div class="popup-name">${n.name}</div>` +
           `<div class="popup-district">${n.district}, ${n.state}</div>` +
           `<div class="popup-stat"><span>Status:</span> <span class="tag tag-${isIsolated ? 'danger' : isAtRisk ? 'warn' : 'safe'}">${status}</span></div>` +
+          `<div class="popup-stat"><span>Population:</span> <b>${n.population ? n.population.toLocaleString() : 'N/A'}</b></div>` +
+          `<div class="popup-stat"><span>Supply Buffer:</span> <b>${n.buffer_days || '—'} days</b></div>` +
+          (n.isolation_reason ? `<div class="popup-desc">${n.isolation_reason}</div>` : '') +
           `<div style="margin-top:6px;text-align:right"><a href="/routes?to=${n.id}" class="btn btn-accent" style="font-size:10px;padding:2px 6px">Route Here &rarr;</a></div>`
         );
 
@@ -379,23 +375,11 @@ class MapEngine {
       const isRisk = s.status === 'AT_RISK';
       const fillColor = isIso ? '#ef4444' : (isRisk ? '#f59e0b' : '#10b981');
       const strokeColor = isIso ? '#7f1d1d' : (isRisk ? '#78350f' : '#064e3b');
-      const radius = isIso ? 4.5 : (isRisk ? 3.8 : 2.8);
+      const radius = isIso ? 3.6 : (isRisk ? 3.0 : 2.2);
 
       const circle = this.nodeCanvasMap[s.node_id];
       if (circle) {
         circle.setStyle({ fillColor, color: strokeColor, radius });
-      }
-
-      const marker = this.nodes[s.node_id];
-      if (marker && !marker._isHub) {
-        const cls = isIso ? 'm-isolated' : (isRisk ? 'm-at-risk' : 'm-safe');
-        const label = isIso ? '!' : (isRisk ? '▲' : '●');
-        const el = marker.getElement();
-        if (el) {
-          el.className = `node-marker leaflet-zoom-animated leaflet-interactive ${cls}`;
-          const span = el.querySelector('span');
-          if (span) span.textContent = label;
-        }
       }
     });
   }
