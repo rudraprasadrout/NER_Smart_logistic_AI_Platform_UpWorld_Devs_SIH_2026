@@ -42,6 +42,7 @@ async function initDashboard() {
     if (isoData.status === 'success') {
       cachedIsolationByHorizon['current'] = isoData;
       window.isolationPanel.render(isoData);
+      window.mapEngine.updateNodeStatuses(isoData.settlements);
     }
     if (forecastData.status === 'success') {
       cachedForecastTimeline = forecastData.timeline;
@@ -84,9 +85,10 @@ function switchHorizon(horizon = 'current') {
       .catch(err => console.error('Forecast horizon fetch error:', err));
   }
 
-  // 2. Sidebar & KPI Transition
+  // 2. Sidebar & KPI & Node Status Transition
   if (cachedIsolationByHorizon[horizon]) {
     window.isolationPanel.render(cachedIsolationByHorizon[horizon]);
+    window.mapEngine.updateNodeStatuses(cachedIsolationByHorizon[horizon].settlements);
   } else {
     fetch(`/api/v1/isolation-index?horizon=${horizon}`)
       .then(r => r.json())
@@ -94,6 +96,7 @@ function switchHorizon(horizon = 'current') {
         if (d.status === 'success') {
           cachedIsolationByHorizon[horizon] = d;
           window.isolationPanel.render(d);
+          window.mapEngine.updateNodeStatuses(d.settlements);
         }
       })
       .catch(e => console.warn('Isolation fetch error:', e));
@@ -169,3 +172,47 @@ async function loadAlerts(lang = 'en') {
     }
   } catch (err) { console.warn('Alert load error:', err); }
 }
+
+async function loadFleet() {
+  const container = document.getElementById('vehicle-fleet-container');
+  if (!container) return;
+  try {
+    const res = await fetch('/api/v1/vehicles');
+    const data = await res.json();
+    if (data.status === 'success' && data.vehicles) {
+      window.mapEngine?.updateVehicles(data.vehicles);
+      
+      container.innerHTML = data.vehicles.map(v => {
+        const isMed = v.priority === 'CRITICAL_MEDICAL';
+        const tagClass = isMed ? 'tag-danger' : 'tag-accent';
+        const pPct = Math.round(v.progress_pct);
+        return `
+          <div class="s-card ${isMed ? 's-isolated' : 's-at-risk'}" style="margin-bottom:8px;cursor:pointer;" onclick="window.mapEngine?.zoomToNode(${v.lat}, ${v.lon}, '${v.name}', '${v.cargo_type}')">
+            <div class="s-card-top">
+              <span class="s-card-name" style="font-size:12px;">🚚 ${v.name}</span>
+              <span class="tag ${tagClass}">${v.priority === 'CRITICAL_MEDICAL' ? 'CRITICAL' : 'RATION'}</span>
+            </div>
+            <div class="s-card-meta"><b>Cargo:</b> ${v.cargo_type}</div>
+            <div class="s-card-stats" style="margin:4px 0;">
+              <span>Speed: <b>${v.speed_kmh} km/h</b></span>
+              <span>Progress: <b>${pPct}%</b></span>
+              <span style="color:${v.delay_min > 10 ? 'var(--status-danger)' : 'var(--status-safe)'}">Delay: <b>${v.delay_min}m</b></span>
+            </div>
+            <div class="bar-track" style="margin-bottom:4px;"><div class="bar-fill ${isMed ? 'f-danger' : 'f-accent'}" style="width:${pPct}%"></div></div>
+            <div style="font-size:10px;color:var(--text-tertiary);">Driver: <b>${v.driver}</b></div>
+          </div>
+        `;
+      }).join('');
+    }
+  } catch (e) {
+    console.warn('Fleet load error:', e);
+  }
+}
+
+// Initial triggers
+document.addEventListener('DOMContentLoaded', () => {
+  loadFleet();
+  loadAlerts();
+  // Live GPS convoy tracking interval every 4 seconds
+  setInterval(loadFleet, 4000);
+});

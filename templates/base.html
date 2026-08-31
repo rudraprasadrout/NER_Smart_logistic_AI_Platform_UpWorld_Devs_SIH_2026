@@ -24,7 +24,7 @@
 
   <header class="app-header">
     <a href="{{ url_for('index') }}" class="brand-section" style="display:flex;align-items:center;gap:12px;text-decoration:none">
-      <img src="{{ url_for('static', filename='images/emblem_badge.png') }}" alt="PathNER AI Logo" style="height:44px;width:44px;object-fit:cover;flex-shrink:0;border-radius:50%;border:1.5px solid rgba(255,255,255,0.15)">
+      <img src="{{ url_for('static', filename='images/logo_transparent.png') }}" alt="PathNER AI Logo" style="height:44px;width:44px;object-fit:contain;flex-shrink:0;border-radius:50%;border:1.5px solid rgba(245,158,11,0.3);background:rgba(255,255,255,0.04);padding:2px;">
       <div style="display:flex;flex-direction:column;line-height:1.15">
         <span style="font-weight:900;font-size:18px;letter-spacing:-0.5px;color:var(--text-heading)">Path<span style="color:#f59e0b">NER</span></span>
         <span style="font-size:9px;font-weight:800;letter-spacing:1.2px;color:var(--status-safe);text-transform:uppercase">Smart Logistics AI</span>
@@ -88,7 +88,7 @@
         <div class="ai-chat-header-top">
           <div class="ai-chat-header-info">
             <div class="ai-chat-header-avatar">
-              <img src="{{ url_for('static', filename='images/emblem_badge.png') }}" alt="Drishti AI">
+              <img src="{{ url_for('static', filename='images/logo_transparent.png') }}" alt="Drishti AI">
             </div>
             <div>
               <div class="ai-chat-header-name">Drishti AI (দৃষ্টি / दृष्टि)</div>
@@ -132,11 +132,11 @@
     <!-- High-Visibility Floating Toggle Launcher Button -->
     <div id="ai-chat-launcher" class="ai-chat-launcher">
       <div class="ai-launcher-icon-wrap">
-        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M2 12s3-7 10-7 10 7 10 7-3 7-10 7-10-7-10-7Z"/><circle cx="12" cy="12" r="3"/></svg>
+        <img src="{{ url_for('static', filename='images/logo_transparent.png') }}" alt="PathNER AI">
         <div class="ai-launcher-pulse"></div>
       </div>
       <div class="ai-launcher-text">
-        <span class="ai-launcher-title">Drishti AI</span>
+        <span class="ai-launcher-title">Drishti <span>AI</span></span>
         <span class="ai-launcher-sub">Tactical Copilot (Live)</span>
       </div>
     </div>

@@ -250,6 +250,7 @@ class MapEngine {
     this.edges = {};
     this.nodes = {};
     this.canvasMarkers = [];
+    this.nodeCanvasMap = {};
 
     const renderer = this.canvasRenderer || L.canvas({ padding: 0.5 });
 
@@ -337,32 +338,66 @@ class MapEngine {
         this.nodes[n.id] = marker;
       } else {
         // Fast Hardware-Accelerated GPU Canvas Circle Markers for all network points
-        const fillColor = isAtRisk ? '#f59e0b' : '#38bdf8';
+        // Status color: REACHABLE = Emerald (#10b981), AT_RISK = Amber (#f59e0b), ISOLATED = Red (#ef4444)
+        const fillColor = isIsolated ? '#ef4444' : (isAtRisk ? '#f59e0b' : '#10b981');
+        const strokeColor = isIsolated ? '#7f1d1d' : (isAtRisk ? '#78350f' : '#064e3b');
+        const radius = isIsolated ? 4.5 : (isAtRisk ? 3.8 : 2.8);
+
         const circle = L.circleMarker([n.lat, n.lon], {
           renderer,
-          radius: 3.5,
-          color: '#0f172a',
+          radius,
+          color: strokeColor,
           weight: 1,
           fillColor,
           fillOpacity: 0.85
         }).addTo(this.map);
 
         circle.bindTooltip(
-          `<div style="font-weight:700;font-size:11px">${n.name}</div><div style="font-size:10px;color:#94a3b8">${n.district} &middot; ${status}</div>`,
+          `<div style="font-weight:700;font-size:11px">${n.name}</div>` +
+          `<div style="font-size:10px;color:#94a3b8">${n.district} &middot; <span style="color:${fillColor};font-weight:700">${status}</span></div>`,
           { sticky: true }
         );
         circle.bindPopup(
           `<div class="popup-name">${n.name}</div>` +
           `<div class="popup-district">${n.district}, ${n.state}</div>` +
-          `<div class="popup-stat"><span>Status:</span> <span class="tag tag-${isAtRisk ? 'warn' : 'safe'}">${status}</span></div>` +
+          `<div class="popup-stat"><span>Status:</span> <span class="tag tag-${isIsolated ? 'danger' : isAtRisk ? 'warn' : 'safe'}">${status}</span></div>` +
           `<div style="margin-top:6px;text-align:right"><a href="/routes?to=${n.id}" class="btn btn-accent" style="font-size:10px;padding:2px 6px">Route Here &rarr;</a></div>`
         );
 
         this.canvasMarkers.push(circle);
+        this.nodeCanvasMap[n.id] = circle;
       }
     });
 
     this.applyLayerVisibility();
+  }
+
+  updateNodeStatuses(settlements) {
+    if (!settlements || !this.map) return;
+    settlements.forEach(s => {
+      const isIso = s.status === 'ISOLATED';
+      const isRisk = s.status === 'AT_RISK';
+      const fillColor = isIso ? '#ef4444' : (isRisk ? '#f59e0b' : '#10b981');
+      const strokeColor = isIso ? '#7f1d1d' : (isRisk ? '#78350f' : '#064e3b');
+      const radius = isIso ? 4.5 : (isRisk ? 3.8 : 2.8);
+
+      const circle = this.nodeCanvasMap[s.node_id];
+      if (circle) {
+        circle.setStyle({ fillColor, color: strokeColor, radius });
+      }
+
+      const marker = this.nodes[s.node_id];
+      if (marker && !marker._isHub) {
+        const cls = isIso ? 'm-isolated' : (isRisk ? 'm-at-risk' : 'm-safe');
+        const label = isIso ? '!' : (isRisk ? '▲' : '●');
+        const el = marker.getElement();
+        if (el) {
+          el.className = `node-marker leaflet-zoom-animated leaflet-interactive ${cls}`;
+          const span = el.querySelector('span');
+          if (span) span.textContent = label;
+        }
+      }
+    });
   }
 
   updateEdgeRisks(horizonEdges, onEdgeClick) {
