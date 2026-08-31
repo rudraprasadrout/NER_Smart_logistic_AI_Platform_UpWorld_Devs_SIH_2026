@@ -414,7 +414,8 @@ document.addEventListener('DOMContentLoaded', async () => {
       if (items.length === 0) {
         list.innerHTML = '<div class="ec-empty-note">No severed settlements detected.</div>';
       } else {
-        list.innerHTML = items.map(s => {
+        const displayItems = items.slice(0, 60);
+        list.innerHTML = displayItems.map(s => {
           const isIsolated = s.status === 'ISOLATED';
           const cardCls = isIsolated ? 'ec-isolated' : '';
           const pillCls = isIsolated ? 'ec-danger' : 'ec-warn';

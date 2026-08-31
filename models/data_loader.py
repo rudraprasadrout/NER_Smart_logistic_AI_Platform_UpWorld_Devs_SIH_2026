@@ -60,50 +60,57 @@ LANDMARK_COORDS = {
 }
 
 def load_nodes():
-    """Loads and enriches settlements and hubs from datasets in data/."""
-    nodes_file = _find_dataset_file('ner_nodes*.csv', 'ner_nodes_FINAL_968.csv')
+    """Loads and enriches settlements, hubs, and active network junctions."""
+    edges_file = _find_dataset_file('ner_edges*.csv', 'ner_edges_REAL (3).csv')
     nodes = {}
     alias_map = {}
 
-    if not os.path.exists(nodes_file):
+    if not os.path.exists(edges_file):
         return nodes
 
-    with open(nodes_file, mode='r', encoding='utf-8') as f:
+    # 1. Extract all active network node endpoints from edges dataset
+    with open(edges_file, mode='r', encoding='utf-8') as f:
         reader = csv.DictReader(f)
-        for idx, row in enumerate(reader):
-            node_id = row.get('osm_node_id') or row.get('id') or f'node_{idx+1:05d}'
-            lat = float(row['lat'])
-            lon = float(row['lon'])
-            node_type = row.get('node_type', 'osm_network_node')
-            
-            district, state = _get_district_and_state(lat, lon)
-            
-            # Default attributes
-            name = row.get('name') or f"{district} Junction #{idx+1}"
-            n_type = row.get('type') or ('junction' if 'node' in node_type else 'town')
-            pop = int(row['population']) if row.get('population') else (800 + ((idx * 137) % 4200))
-            buffer_days = int(row['buffer_days']) if row.get('buffer_days') else (3 + (idx % 8))
-            desc = row.get('description') or f"Transport node in {district}, {state} (Lat {lat:.4f}, Lon {lon:.4f})"
+        idx = 0
+        for row in reader:
+            for endpoint_col in ('u', 'v'):
+                node_id = row.get(endpoint_col)
+                if not node_id or node_id in nodes:
+                    continue
+                
+                lat, lon = None, None
+                if node_id.startswith('osm_node_'):
+                    parts = node_id[len('osm_node_'):].split('_')
+                    if len(parts) == 2:
+                        try:
+                            lat, lon = float(parts[0]), float(parts[1])
+                        except ValueError:
+                            pass
+                
+                if lat is None or lon is None:
+                    continue
 
-            nodes[node_id] = {
-                'id': node_id,
-                'name': name,
-                'district': district,
-                'state': state,
-                'lat': lat,
-                'lon': lon,
-                'type': n_type,
-                'population': pop,
-                'buffer_days': buffer_days,
-                'description': desc
-            }
+                idx += 1
+                district, state = _get_district_and_state(lat, lon)
+                nodes[node_id] = {
+                    'id': node_id,
+                    'name': f"{district} Junction #{idx}",
+                    'district': district,
+                    'state': state,
+                    'lat': lat,
+                    'lon': lon,
+                    'type': 'junction',
+                    'population': 800 + ((idx * 137) % 4200),
+                    'buffer_days': 3 + (idx % 8),
+                    'description': f"Transport junction in {district}, {state} (Lat {lat:.4f}, Lon {lon:.4f})"
+                }
 
-    # Match and designate prominent landmark hubs with precise geographic coordinates
+    # 2. Match and designate prominent landmark hubs with precise geographic coordinates
     for alias, l_info in LANDMARK_COORDS.items():
         best_id = None
         min_dist = float('inf')
         for n_id, n_data in nodes.items():
-            d = ((n_data['lat'] - l_info['lat'])**2 + (n_data['lon'] - l_info['lon'])**2)**0.5
+            d = (n_data['lat'] - l_info['lat'])**2 + (n_data['lon'] - l_info['lon'])**2
             if d < min_dist:
                 min_dist = d
                 best_id = n_id
@@ -122,33 +129,20 @@ def load_nodes():
 
 def load_edges():
     """Loads road segments from datasets in data/ with parsed coordinates and safety attributes."""
-    edges_file = _find_dataset_file('ner_edges*.csv', 'ner_edges_FINAL_824.csv')
+    edges_file = _find_dataset_file('ner_edges*.csv', 'ner_edges_REAL (3).csv')
     edges = []
 
     if not os.path.exists(edges_file):
         return edges
 
-    # Coordinate to osm_node_id lookup map
-    nodes_data = load_nodes()
-    coord_to_node = {}
-    for n_id, n_data in nodes_data.items():
-        if not n_id.startswith('_'):
-            coord_to_node[(round(n_data['lon'], 7), round(n_data['lat'], 7))] = n_id
-
     with open(edges_file, mode='r', encoding='utf-8') as f:
-        # Skip leading blank lines (some CSVs have \r\n before header)
+        # Skip leading blank lines
         lines = [line for line in f if line.strip()]
         reader = csv.DictReader(lines)
         for idx, row in enumerate(reader):
             edge_id = row.get('edge_id') or row.get('id') or f'osm_edge_{idx+1:04d}'
-            u_str = row.get('u', '')
-            v_str = row.get('v', '')
-            
-            u_coord = _parse_coordinate_pair(u_str)
-            v_coord = _parse_coordinate_pair(v_str)
-
-            u_id = coord_to_node.get(u_coord, u_str) if u_coord else u_str
-            v_id = coord_to_node.get(v_coord, v_str) if v_coord else v_str
+            u_id = row.get('u', '').strip()
+            v_id = row.get('v', '').strip()
 
             # Parse or generate geometry
             coords = []
@@ -157,8 +151,12 @@ def load_edges():
                     if ',' in pt:
                         lat_s, lon_s = pt.split(',')
                         coords.append([float(lat_s.strip()), float(lon_s.strip())])
-            elif u_coord and v_coord:
-                coords = [[u_coord[1], u_coord[0]], [v_coord[1], v_coord[0]]]
+            
+            if not coords and u_id.startswith('osm_node_') and v_id.startswith('osm_node_'):
+                u_pts = u_id[len('osm_node_'):].split('_')
+                v_pts = v_id[len('osm_node_'):].split('_')
+                if len(u_pts) == 2 and len(v_pts) == 2:
+                    coords = [[float(u_pts[0]), float(u_pts[1])], [float(v_pts[0]), float(v_pts[1])]]
 
             # Compute midpoint for district context
             mid_lat = (coords[0][0] + coords[-1][0]) / 2.0 if coords else 25.3
@@ -216,23 +214,28 @@ def load_edges():
     return edges
 
 def load_weather():
-    """Loads district-wise weather and 72-hour forecast data from data/weather_data.csv."""
-    weather_file = os.path.join(Config.DATA_DIR, 'weather_data.csv')
-    weather = {}
-    if os.path.exists(weather_file):
-        with open(weather_file, mode='r', encoding='utf-8') as f:
-            reader = csv.DictReader(f)
-            for row in reader:
-                weather[row['district']] = {
-                    'district': row['district'],
-                    'current_rainfall_mm': float(row['current_rainfall_mm']),
-                    'forecast_24h_mm': float(row['forecast_24h_mm']),
-                    'forecast_48h_mm': float(row['forecast_48h_mm']),
-                    'forecast_72h_mm': float(row['forecast_72h_mm']),
-                    'soil_saturation_index': float(row['soil_saturation_index']),
-                    'weather_condition': row['weather_condition']
-                }
-    return weather
+    """Loads live district-wise weather and 72-hour forecast data from OpenWeatherMap API with automatic fallback."""
+    try:
+        from .weather_service import OpenWeatherService
+        return OpenWeatherService.get_district_weather()
+    except Exception as e:
+        print(f"[Weather] Error loading live OpenWeather data: {e}")
+        weather_file = os.path.join(Config.DATA_DIR, 'weather_data.csv')
+        weather = {}
+        if os.path.exists(weather_file):
+            with open(weather_file, mode='r', encoding='utf-8') as f:
+                reader = csv.DictReader(f)
+                for row in reader:
+                    weather[row['district']] = {
+                        'district': row['district'],
+                        'current_rainfall_mm': float(row['current_rainfall_mm']),
+                        'forecast_24h_mm': float(row['forecast_24h_mm']),
+                        'forecast_48h_mm': float(row['forecast_48h_mm']),
+                        'forecast_72h_mm': float(row['forecast_72h_mm']),
+                        'soil_saturation_index': float(row['soil_saturation_index']),
+                        'weather_condition': row['weather_condition']
+                    }
+        return weather
 
 def load_historical_disruptions():
     """Loads historical incident records for ML model training from data/historical_disruptions.csv."""

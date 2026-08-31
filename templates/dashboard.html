@@ -82,24 +82,27 @@
     <div class="panel-scroll" style="padding:12px;display:flex;flex-direction:column;gap:10px">
 
       <!-- Chart -->
-      <div>
+      <div class="chart-expandable" id="open-forecast-modal-btn" title="Click to open full analysis pop-up" style="padding:4px;border:1px solid transparent;border-radius:var(--radius-md);">
         <div class="panel-head" style="padding:0 0 8px 0;border-bottom:none">
-          <span class="panel-head-title">Risk vs Rainfall</span>
-          <span class="panel-head-badge">72h Model</span>
+          <span class="panel-head-title">Precipitation vs Slope Risk</span>
+          <span class="panel-head-badge" style="display:flex;align-items:center;gap:4px;cursor:pointer">
+            <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="15 3 21 3 21 9"/><polyline points="9 21 3 21 3 15"/><line x1="21" y1="3" x2="14" y2="10"/><line x1="3" y1="21" x2="10" y2="14"/></svg>
+            Expand ⛶
+          </span>
         </div>
         <div class="chart-container">
           <canvas id="forecast-chart-canvas"></canvas>
         </div>
       </div>
 
-      <!-- AI Explainability -->
+      <!-- Explainability Drawer -->
       <div id="explainability-drawer">
         <div class="panel-head" style="padding:0 0 8px 0;border-bottom:none">
-          <span class="panel-head-title">Risk Attribution</span>
-          <span class="panel-head-badge">SHAP ML</span>
+          <span class="panel-head-title">Corridor Geotechnical Factors</span>
+          <span class="panel-head-badge">Attribution</span>
         </div>
         <div style="text-align:center;color:var(--text-tertiary);font-size:12px;padding:16px 0">
-          Click a road segment on the map to inspect AI hazard attribution.
+          Click any road corridor on the map to inspect slope and hydrological factor attribution.
         </div>
       </div>
 
@@ -125,6 +128,73 @@
     </div>
   </div>
 
+</div>
+
+<!-- Full-Resolution Analytics Modal Pop-up -->
+<div id="forecast-modal-backdrop" class="modal-backdrop">
+  <div class="modal-dialog">
+    <div class="modal-header">
+      <div class="modal-title-group">
+        <div style="width:8px;height:8px;border-radius:50%;background:var(--accent);"></div>
+        <span class="modal-title">Precipitation & Geotechnical Hazard Matrix</span>
+        <span class="panel-head-badge">OpenWeatherMap Live Telemetry</span>
+      </div>
+      <button id="forecast-modal-close-btn" class="modal-close-btn" title="Close (Esc)">&times;</button>
+    </div>
+    
+    <div class="modal-body">
+      <!-- Modal Controls & District Selector -->
+      <div style="display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap;">
+        <div style="display:flex;align-items:center;gap:8px;">
+          <span style="font-size:11px;font-weight:700;color:var(--text-secondary);text-transform:uppercase;">Focus District:</span>
+          <select id="modal-district-select" class="header-select" style="min-width:180px;font-size:12px;">
+            <option value="ALL">All Corridor Network (Average)</option>
+            <option value="East Khasi Hills">East Khasi Hills (Shillong)</option>
+            <option value="East Jaintia Hills">East Jaintia Hills (Khliehriat / Sonapur)</option>
+            <option value="West Jaintia Hills">West Jaintia Hills (Jowai)</option>
+            <option value="Dima Hasao">Dima Hasao (Haflong Pass)</option>
+            <option value="Cachar">Cachar (Silchar Hub)</option>
+            <option value="Karimganj">Karimganj (Border Corridor)</option>
+            <option value="Ri-Bhoi">Ri-Bhoi (Nongpoh Valley)</option>
+            <option value="Kamrup Metropolitan">Kamrup Metro (Guwahati Gateway)</option>
+          </select>
+        </div>
+        <div id="modal-metric-badges" style="display:flex;gap:10px;font-size:11px;">
+          <!-- Injected dynamically -->
+        </div>
+      </div>
+
+      <!-- High-Resolution Modal Chart Canvas -->
+      <div class="modal-chart-wrap">
+        <canvas id="modal-forecast-chart-canvas"></canvas>
+      </div>
+
+      <!-- District Hydrological Breakdown Table -->
+      <div>
+        <div style="font-size:11px;font-weight:700;color:var(--text-heading);text-transform:uppercase;letter-spacing:0.5px;margin-bottom:8px;">
+          Corridor Districts Meteorological Status
+        </div>
+        <div style="overflow-x:auto;">
+          <table class="matrix-table" id="modal-district-table">
+            <thead>
+              <tr>
+                <th>District / Sector</th>
+                <th>Current Obs</th>
+                <th>24h Forecast</th>
+                <th>48h Forecast</th>
+                <th>72h Forecast</th>
+                <th>Soil Saturation</th>
+                <th>Risk Category</th>
+              </tr>
+            </thead>
+            <tbody id="modal-district-table-body">
+              <!-- Populated dynamically from live weather telemetry -->
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+  </div>
 </div>
 {% endblock %}
 

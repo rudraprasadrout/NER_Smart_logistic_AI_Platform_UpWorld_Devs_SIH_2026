@@ -9,8 +9,10 @@ class MapEngine {
     this.map = null;
     this.currentTileLayer = null;
     this.currentBasemap = 'dark';
+    this.canvasRenderer = null;
     this.edges = {};
     this.nodes = {};
+    this.canvasMarkers = [];
     this.vehicles = {};
     this.routeLayers = [];
     
@@ -19,6 +21,7 @@ class MapEngine {
       roads: true,
       hubs: true,
       alerts: true,
+      network: true,
       fleet: true
     };
 
@@ -56,8 +59,11 @@ class MapEngine {
       center, 
       zoom, 
       zoomControl: true, 
-      attributionControl: false 
+      attributionControl: false,
+      preferCanvas: true
     });
+
+    this.canvasRenderer = L.canvas({ padding: 0.5 });
 
     const savedTheme = localStorage.getItem('pathner_basemap') || (localStorage.getItem('pathner_theme') === 'light' ? 'light' : 'dark');
     this.setBasemap(savedTheme);
@@ -123,6 +129,7 @@ class MapEngine {
       <button class="map-layer-toggle active" data-layer="roads">🛣️ Roads</button>
       <button class="map-layer-toggle active" data-layer="hubs">🟣 Hubs</button>
       <button class="map-layer-toggle active" data-layer="alerts">⚠️ Chokepoints</button>
+      <button class="map-layer-toggle active" data-layer="network">⚡ All Nodes (GPU)</button>
       <button class="map-layer-toggle active" data-layer="fleet">🚚 Fleet</button>
     `;
 
@@ -151,7 +158,7 @@ class MapEngine {
       }
     });
 
-    // Nodes
+    // Strategic DOM Badge Nodes
     Object.entries(this.nodes).forEach(([id, m]) => {
       const isHub = m._isHub;
       const isAlert = m._isAlert;
@@ -164,6 +171,15 @@ class MapEngine {
         if (!this.map.hasLayer(m)) this.map.addLayer(m);
       } else {
         this.map.removeLayer(m);
+      }
+    });
+
+    // GPU Canvas Network Nodes
+    this.canvasMarkers.forEach(cm => {
+      if (this.layersVisible.network) {
+        if (!this.map.hasLayer(cm)) this.map.addLayer(cm);
+      } else {
+        this.map.removeLayer(cm);
       }
     });
 
@@ -186,7 +202,7 @@ class MapEngine {
     legend.innerHTML = `
       <div class="map-floating-legend-title">
         <span>Accessibility Network</span>
-        <span id="legend-status-badge" style="font-size:9px;color:#10b981">● Live</span>
+        <span id="legend-status-badge" style="font-size:9px;color:#10b981">● Live (GPU)</span>
       </div>
       <div class="legend-item">
         <span class="legend-swatch-line" style="background:#10b981"></span>
@@ -206,7 +222,11 @@ class MapEngine {
       </div>
       <div class="legend-item">
         <span class="legend-swatch-dot" style="background:#ef4444"></span>
-        <span>Isolated Settlement</span>
+        <span>Severed / Isolated Node</span>
+      </div>
+      <div class="legend-item">
+        <span class="legend-swatch-dot" style="background:#38bdf8;width:7px;height:7px"></span>
+        <span>Network Junction (GPU Canvas)</span>
       </div>
       <div class="legend-item">
         <span class="legend-swatch-dot" style="background:#8b5cf6"></span>
@@ -226,8 +246,12 @@ class MapEngine {
       if (l.line) this.map.removeLayer(l.line);
     });
     Object.values(this.nodes).forEach(m => this.map.removeLayer(m));
+    this.canvasMarkers.forEach(cm => this.map.removeLayer(cm));
     this.edges = {};
     this.nodes = {};
+    this.canvasMarkers = [];
+
+    const renderer = this.canvasRenderer || L.canvas({ padding: 0.5 });
 
     // 1. Render Dual-Stroke High-Contrast Road Corridors
     data.edges.forEach(e => {
@@ -244,7 +268,8 @@ class MapEngine {
         weight: w + 2.5,
         opacity: 0.75,
         lineCap: 'round',
-        lineJoin: 'round'
+        lineJoin: 'round',
+        renderer
       }).addTo(this.map);
 
       // Main colored road line
@@ -254,7 +279,8 @@ class MapEngine {
         opacity: 0.95, 
         dashArray: dash, 
         lineCap: 'round', 
-        lineJoin: 'round' 
+        lineJoin: 'round',
+        renderer
       }).addTo(this.map);
 
       line.bindTooltip(
@@ -267,63 +293,104 @@ class MapEngine {
       this.edges[e.id] = { casing, line };
     });
 
-    // 2. Render All Network Nodes with crisp circular badges & white borders
+    // 2. Render Network Nodes with GPU Canvas & Strategic DOM Badges
     data.nodes.forEach(n => {
-      const isHub = n.type === 'supply_hub';
+      const isHub = n.type === 'supply_hub' || Boolean(n.alias && n.alias.includes('hub'));
       const status = n.status || 'REACHABLE';
-      const isAlert = status === 'ISOLATED' || status === 'AT_RISK';
+      const isIsolated = status === 'ISOLATED';
+      const isAtRisk = status === 'AT_RISK';
+      const isProminent = isHub || isIsolated || Boolean(n.alias);
 
-      let cls = 'm-reachable', label = '•', size = [14, 14];
+      if (isProminent) {
+        // High-visibility DOM Badges for Hubs and Critical Chokepoints
+        let cls = isHub ? 'm-hub' : (isIsolated ? 'm-isolated' : 'm-at-risk');
+        let label = isHub ? 'H' : (isIsolated ? '!' : '▲');
+        let size = isHub ? [28, 28] : [20, 20];
 
-      if (isHub) {
-        cls = 'm-hub';
-        label = 'H';
-        size = [28, 28];
-      } else if (status === 'ISOLATED') {
-        cls = 'm-isolated';
-        label = '!';
-        size = [18, 18];
-      } else if (status === 'AT_RISK') {
-        cls = 'm-at-risk';
-        label = '▲';
-        size = [18, 18];
+        const icon = L.divIcon({
+          className: `node-marker ${cls}`,
+          html: `<span style="font-size:${isHub ? 12 : 10}px;font-weight:900;color:#ffffff;line-height:1">${label}</span>`,
+          iconSize: size, 
+          iconAnchor: [size[0]/2, size[1]/2]
+        });
+
+        const marker = L.marker([n.lat, n.lon], { icon }).addTo(this.map);
+        marker._isHub = isHub;
+        marker._isAlert = isIsolated || isAtRisk;
+
+        marker.bindTooltip(
+          `<div style="font-weight:700;font-size:11px">${n.name}</div>` +
+          `<div style="font-size:10px;color:#94a3b8">${n.district} · <span style="color:${isIsolated ? '#ef4444' : isAtRisk ? '#f59e0b' : '#10b981'}">${status}</span></div>`,
+          { sticky: true }
+        );
+        marker.bindPopup(
+          `<div class="popup-name">${n.name}</div>` +
+          `<div class="popup-district">${n.district}, ${n.state}</div>` +
+          `<div class="popup-stat"><span>Reachability:</span> <span class="tag tag-${isIsolated ? 'danger' : isAtRisk ? 'warn' : 'safe'}">${status}</span></div>` +
+          `<div class="popup-stat"><span>Hub Distance:</span> <b>${n.min_hub_hops >= 0 ? n.min_hub_hops + ' hops' : 'Cut off (Unreachable)'}</b></div>` +
+          `<div class="popup-stat"><span>Population:</span> <b>${n.population ? n.population.toLocaleString() : 'N/A'}</b></div>` +
+          `<div class="popup-stat"><span>Supply Buffer:</span> <b>${n.buffer_days || '—'} days</b></div>` +
+          (n.isolation_reason ? `<div class="popup-desc">${n.isolation_reason}</div>` : '') +
+          `<div style="margin-top:8px;text-align:right"><a href="/routes?to=${n.id}" class="btn btn-accent" style="font-size:10px;padding:3px 8px">Dispatch Relief &rarr;</a></div>`
+        );
+
+        this.nodes[n.id] = marker;
       } else {
-        cls = 'm-reachable';
-        label = '•';
-        size = [14, 14];
+        // Fast Hardware-Accelerated GPU Canvas Circle Markers for all network points
+        const fillColor = isAtRisk ? '#f59e0b' : '#38bdf8';
+        const circle = L.circleMarker([n.lat, n.lon], {
+          renderer,
+          radius: 3.5,
+          color: '#0f172a',
+          weight: 1,
+          fillColor,
+          fillOpacity: 0.85
+        }).addTo(this.map);
+
+        circle.bindTooltip(
+          `<div style="font-weight:700;font-size:11px">${n.name}</div><div style="font-size:10px;color:#94a3b8">${n.district} &middot; ${status}</div>`,
+          { sticky: true }
+        );
+        circle.bindPopup(
+          `<div class="popup-name">${n.name}</div>` +
+          `<div class="popup-district">${n.district}, ${n.state}</div>` +
+          `<div class="popup-stat"><span>Status:</span> <span class="tag tag-${isAtRisk ? 'warn' : 'safe'}">${status}</span></div>` +
+          `<div style="margin-top:6px;text-align:right"><a href="/routes?to=${n.id}" class="btn btn-accent" style="font-size:10px;padding:2px 6px">Route Here &rarr;</a></div>`
+        );
+
+        this.canvasMarkers.push(circle);
       }
-
-      const icon = L.divIcon({
-        className: `node-marker ${cls}`,
-        html: `<span style="font-size:${isHub ? 12 : 9}px;font-weight:900;color:#ffffff;line-height:1">${label}</span>`,
-        iconSize: size, 
-        iconAnchor: [size[0]/2, size[1]/2]
-      });
-
-      const marker = L.marker([n.lat, n.lon], { icon }).addTo(this.map);
-      marker._isHub = isHub;
-      marker._isAlert = isAlert;
-
-      marker.bindTooltip(
-        `<div style="font-weight:700;font-size:11px">${n.name}</div>` +
-        `<div style="font-size:10px;color:#94a3b8">${n.district} · <span style="color:${status === 'ISOLATED' ? '#ef4444' : status === 'AT_RISK' ? '#f59e0b' : '#10b981'}">${status}</span></div>`,
-        { sticky: true }
-      );
-      marker.bindPopup(
-        `<div class="popup-name">${n.name}</div>` +
-        `<div class="popup-district">${n.district}, ${n.state}</div>` +
-        `<div class="popup-stat"><span>Reachability:</span> <span class="tag tag-${status === 'ISOLATED' ? 'danger' : status === 'AT_RISK' ? 'warn' : 'safe'}">${status}</span></div>` +
-        `<div class="popup-stat"><span>Hub Distance:</span> <b>${n.min_hub_hops >= 0 ? n.min_hub_hops + ' hops' : 'Cut off (Unreachable)'}</b></div>` +
-        `<div class="popup-stat"><span>Population:</span> <b>${n.population ? n.population.toLocaleString() : 'N/A'}</b></div>` +
-        `<div class="popup-stat"><span>Supply Buffer:</span> <b>${n.buffer_days || '—'} days</b></div>` +
-        (n.isolation_reason ? `<div class="popup-desc">${n.isolation_reason}</div>` : '') +
-        `<div style="margin-top:8px;text-align:right"><a href="/routes?to=${n.id}" class="btn btn-accent" style="font-size:10px;padding:3px 8px">Dispatch Relief &rarr;</a></div>`
-      );
-
-      this.nodes[n.id] = marker;
     });
 
     this.applyLayerVisibility();
+  }
+
+  updateEdgeRisks(horizonEdges, onEdgeClick) {
+    if (!horizonEdges || !this.map) return;
+    horizonEdges.forEach(e => {
+      const stored = this.edges[e.edge_id || e.id];
+      if (!stored || !stored.line) return;
+      const r = e.risk_score;
+      let color = '#10b981', w = 4.5, dash = null, isBlocked = r >= 70;
+      if (isBlocked) { color = '#ef4444'; w = 5.5; dash = '6,6'; }
+      else if (r >= 50) { color = '#f59e0b'; w = 4.5; }
+      else if (r >= 25) { color = '#fbbf24'; w = 4.0; }
+
+      stored.line.setStyle({ color, weight: w, dashArray: dash });
+      stored.edgeData = { ...(stored.edgeData || {}), ...e };
+      
+      stored.line.unbindTooltip();
+      stored.line.bindTooltip(
+        `<div style="font-weight:800;font-size:12px;">${e.name || stored.edgeData?.name || 'Road Corridor'}</div>` +
+        `<div style="font-size:11px;margin-top:2px;">Risk Score: <b style="color:${color}">${r}%</b> · ${e.severity || 'Normal'}</div>` +
+        `<div style="font-size:10px;color:#94a3b8">${e.distance_km || stored.edgeData?.distance_km || 10} km · ${e.rainfall_mm || 0} mm rain</div>`,
+        { sticky: true }
+      );
+      if (onEdgeClick) {
+        stored.line.off('click');
+        stored.line.on('click', () => onEdgeClick(stored.edgeData));
+      }
+    });
   }
 
   updateVehicleMarkers(vehicles) {

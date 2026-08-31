@@ -17,11 +17,20 @@ class IsolationPanel {
   render(d) {
     this.data = d;
     const s = d.summary;
-    this._set('kpi-iso-pop', s.total_isolated_population.toLocaleString());
-    this._set('kpi-iso-count', s.isolated_count);
-    this._set('kpi-risk-pop', s.total_at_risk_population.toLocaleString());
-    this._set('kpi-blocked', s.severed_corridors_count);
+    this._animateNumber('kpi-iso-pop', s.total_isolated_population || 0);
+    this._animateNumber('kpi-iso-count', s.isolated_count || 0);
+    this._animateNumber('kpi-risk-pop', s.total_at_risk_population || 0);
+    this._animateNumber('kpi-blocked', s.severed_corridors_count || 0);
     this.draw();
+  }
+
+  _animateNumber(id, targetVal) {
+    const el = document.getElementById(id);
+    if (!el) return;
+    el.textContent = Number(targetVal).toLocaleString();
+    el.classList.remove('kpi-pulse');
+    void el.offsetWidth; // Trigger reflow for CSS animation
+    el.classList.add('kpi-pulse');
   }
 
   draw() {
@@ -35,7 +44,8 @@ class IsolationPanel {
 
     if (!items.length) { el.innerHTML = '<div style="text-align:center;color:var(--text-tertiary);padding:24px;font-size:12px;">No matching settlements.</div>'; return; }
 
-    el.innerHTML = items.map(s => {
+    const displayItems = items.slice(0, 60);
+    el.innerHTML = displayItems.map(s => {
       const cls = s.status === 'ISOLATED' ? 's-isolated' : s.status === 'AT_RISK' ? 's-at-risk' : 's-safe';
       const tagCls = s.status === 'ISOLATED' ? 'tag-danger' : s.status === 'AT_RISK' ? 'tag-warn' : 'tag-safe';
       const label = s.status === 'ISOLATED' ? 'Isolated' : s.status === 'AT_RISK' ? 'At Risk' : 'Reachable';

@@ -19,6 +19,18 @@ def get_accessibility_graph():
         'edges': data['edges']
     })
 
+@api_graph_bp.route('/weather', methods=['GET'])
+def get_live_weather():
+    """Returns real-time district weather & 72h precipitation forecasts from OpenWeatherMap API."""
+    from models.weather_service import OpenWeatherService
+    refresh = request.args.get('refresh', 'false').lower() in ('true', '1')
+    weather_data = OpenWeatherService.get_district_weather(force_refresh=refresh)
+    return jsonify({
+        'status': 'success',
+        'count': len(weather_data),
+        'weather': weather_data
+    })
+
 @api_graph_bp.route('/graph/forecast', methods=['GET'])
 def get_graph_forecast():
     """

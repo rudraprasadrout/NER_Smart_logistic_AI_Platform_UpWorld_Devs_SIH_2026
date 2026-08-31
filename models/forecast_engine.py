@@ -2,35 +2,42 @@ from .data_loader import load_edges, load_weather
 from .risk_model import risk_model
 
 class ForecastEngine:
-    @staticmethod
-    def get_forecast_timeline(edges_data=None, weather_data=None):
+    _cached_timeline = {}
+    _cached_weather_stamp = 0
+
+    @classmethod
+    def clear_cache(cls):
+        cls._cached_timeline.clear()
+        cls._cached_weather_stamp = 0
+
+    @classmethod
+    def get_forecast_timeline(cls, edges_data=None, weather_data=None):
         """
-        Computes risk scores across 4 time horizons: current, 24h, 48h, 72h.
+        Computes risk projections across 4 horizons (current, 24h, 48h, 72h) in batch.
+        Caches results in memory for instantaneous (0ms) response.
         """
-        if edges_data is None:
-            edges_data = load_edges()
         if weather_data is None:
             weather_data = load_weather()
+
+        # Check in-memory cache
+        if cls._cached_timeline and edges_data is None:
+            return cls._cached_timeline
+
+        if edges_data is None:
+            edges_data = load_edges()
 
         horizons = ['current', '24h', '48h', '72h']
         timeline = {}
 
         for h in horizons:
             horizon_param = None if h == 'current' else h
-            edge_results = []
+            batch_evals = risk_model.calculate_risk_batch(edges_data, weather_data, horizon=horizon_param)
             
-            for edge in edges_data:
-                district = edge.get('district_context', 'East Khasi Hills')
-                w = weather_data.get(district, {
-                    'current_rainfall_mm': 15.0,
-                    'forecast_24h_mm': 25.0,
-                    'forecast_48h_mm': 35.0,
-                    'forecast_72h_mm': 20.0,
-                    'soil_saturation_index': 0.5
-                })
-                
-                risk_eval = risk_model.calculate_risk(edge, w, active_reports=0, horizon=horizon_param)
+            edge_results = []
+            for i, edge in enumerate(edges_data):
+                risk_eval = batch_evals[i]
                 edge_results.append({
+                    'id': edge['id'],
                     'edge_id': edge['id'],
                     'name': edge['name'],
                     'u': edge['u'],
@@ -39,9 +46,13 @@ class ForecastEngine:
                     'status': risk_eval['status'],
                     'rainfall_mm': risk_eval['rainfall_mm'],
                     'severity': risk_eval['severity'],
-                    'factors': risk_eval['factors']
+                    'slope_deg': edge.get('slope_deg', 5.0),
+                    'distance_km': edge.get('distance_km', 10.0),
+                    'district_context': edge.get('district_context', 'Assam-Meghalaya')
+                    
                 })
                 
             timeline[h] = edge_results
 
+        cls._cached_timeline = timeline
         return timeline

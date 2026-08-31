@@ -77,6 +77,15 @@
 .kpi-cell-value.v-safe { color: var(--status-safe); }
 .kpi-cell-value.v-accent { color: var(--accent-secondary); }
 
+.kpi-cell-value.kpi-pulse {
+  animation: kpiPulseAnim 0.4s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+@keyframes kpiPulseAnim {
+  0% { transform: scale(1.08); opacity: 0.7; }
+  100% { transform: scale(1); opacity: 1; }
+}
+
 .kpi-cell-sub {
   font-size: 10px; color: var(--text-tertiary); font-weight: 500;
   margin-top: 1px;
@@ -239,7 +248,7 @@
 .btn-ghost:hover { background: var(--surface-overlay); color: var(--text-heading); }
 
 /* ─── Chart ─── */
-.chart-container { position: relative; width: 100%; height: 150px; }
+.chart-container { position: relative; width: 100%; height: 165px; margin-bottom: 4px; }
 
 /* ─── Forms ─── */
 .form-group { margin-bottom: 14px; }
@@ -307,3 +316,149 @@ textarea.form-input { resize: vertical; min-height: 60px; }
 
 .legend-line { width: 16px; height: 3px; border-radius: 2px; }
 .legend-dot { width: 8px; height: 8px; border-radius: 50%; }
+
+/* ─── Interactive Chart Pop-up & Modal ─── */
+.chart-expandable {
+  cursor: pointer;
+  border-radius: var(--radius-sm);
+  transition: all var(--duration) var(--ease-out);
+}
+.chart-expandable:hover {
+  background: var(--bg-card-hover);
+}
+
+.modal-backdrop {
+  position: fixed;
+  inset: 0;
+  background: rgba(15, 23, 42, 0.75);
+  backdrop-filter: blur(6px);
+  -webkit-backdrop-filter: blur(6px);
+  z-index: 9999;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 20px;
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 0.25s ease;
+}
+
+.modal-backdrop.active {
+  opacity: 1;
+  pointer-events: auto;
+}
+
+.modal-dialog {
+  background: var(--bg-secondary);
+  border: 1px solid var(--border-secondary);
+  border-radius: var(--radius-lg);
+  box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5);
+  width: 100%;
+  max-width: 900px;
+  max-height: 90vh;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  transform: scale(0.96);
+  transition: transform 0.25s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.modal-backdrop.active .modal-dialog {
+  transform: scale(1);
+}
+
+.modal-header {
+  padding: 14px 20px;
+  border-bottom: 1px solid var(--border-primary);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  background: var(--bg-card);
+}
+
+.modal-title-group {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.modal-title {
+  font-size: 14px;
+  font-weight: 700;
+  color: var(--text-heading);
+  letter-spacing: -0.2px;
+}
+
+.modal-close-btn {
+  background: transparent;
+  border: none;
+  color: var(--text-tertiary);
+  font-size: 18px;
+  font-weight: 700;
+  cursor: pointer;
+  width: 28px;
+  height: 28px;
+  border-radius: var(--radius-sm);
+  display: grid;
+  place-items: center;
+  transition: all var(--duration) var(--ease-out);
+}
+.modal-close-btn:hover {
+  background: var(--bg-tertiary);
+  color: var(--text-heading);
+}
+
+.modal-body {
+  padding: 18px 20px;
+  overflow-y: auto;
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.modal-chart-wrap {
+  position: relative;
+  width: 100%;
+  height: 260px;
+  background: var(--bg-primary);
+  border: 1px solid var(--border-primary);
+  border-radius: var(--radius-md);
+  padding: 12px 14px;
+}
+
+.matrix-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 11.5px;
+  border: 1px solid var(--border-primary);
+  border-radius: var(--radius-sm);
+  overflow: hidden;
+}
+
+.matrix-table th {
+  background: var(--bg-card);
+  color: var(--text-secondary);
+  font-weight: 700;
+  text-transform: uppercase;
+  font-size: 10px;
+  letter-spacing: 0.5px;
+  padding: 8px 12px;
+  text-align: left;
+  border-bottom: 1px solid var(--border-primary);
+}
+
+.matrix-table td {
+  padding: 8px 12px;
+  border-bottom: 1px solid var(--border-primary);
+  color: var(--text-primary);
+}
+
+.matrix-table tr:last-child td {
+  border-bottom: none;
+}
+
+.matrix-table tr:hover td {
+  background: var(--bg-card-hover);
+}
+

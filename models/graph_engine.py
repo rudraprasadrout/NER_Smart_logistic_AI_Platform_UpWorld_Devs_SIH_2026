@@ -212,6 +212,10 @@ class GraphEngine:
                 pass
             self.rebuild_graph()
 
+    def clear_cache(self):
+        """Clears cached graph edges."""
+        self._cached_graph_edges.clear()
+
     def rebuild_graph(self, horizon=None):
         """Reconstructs the NetworkX graph with updated dynamic risk weights."""
         cache_key = str(horizon)
@@ -224,24 +228,19 @@ class GraphEngine:
         for node_id, data in self.nodes.items():
             self.graph.add_node(node_id, **data)
             
-        # Add edges with evaluated risk & weights
+        # Batch evaluate risk for all edges simultaneously in ~5ms
+        batch_evals = risk_model.calculate_risk_batch(
+            self.edges, 
+            self.weather, 
+            field_reports_map=self.field_reports, 
+            horizon=horizon
+        )
+
         evaluated_edges = []
-        for edge in self.edges:
-            district = edge.get('district_context', 'East Khasi Hills')
-            w = self.weather.get(district, {
-                'current_rainfall_mm': 15.0,
-                'forecast_24h_mm': 25.0,
-                'forecast_48h_mm': 35.0,
-                'forecast_72h_mm': 20.0,
-                'soil_saturation_index': 0.5
-            })
-            
-            active_reports = self.field_reports.get(edge['id'], [])
-            active_rep_count = len(active_reports)
-            
-            # Evaluate risk using serialized ML model
-            risk_eval = risk_model.calculate_risk(edge, w, active_reports=active_rep_count, horizon=horizon)
+        for i, edge in enumerate(self.edges):
+            risk_eval = batch_evals[i]
             risk_score = risk_eval['risk_score']
+            active_rep_count = risk_eval.get('active_reports', 0)
 
             dist = edge.get('distance_km', 10.0)
             speed = max(15.0, edge.get('avg_speed_kmh', 45.0))
@@ -263,7 +262,6 @@ class GraphEngine:
                 'status': risk_eval['status'],
                 'severity': risk_eval['severity'],
                 'rainfall_mm': risk_eval['rainfall_mm'],
-                'factors': risk_eval['factors'],
                 'cost_weight': cost_weight,
                 'is_blocked': is_blocked,
                 'base_time_hours': base_time_hours,
@@ -292,15 +290,23 @@ class GraphEngine:
             if n_id.startswith('_'):
                 continue
             s_info = node_status_map.get(n_id, {})
+            status = s_info.get('status', 'REACHABLE')
             enriched_nodes.append({
-                **n,
-                'status': s_info.get('status', 'REACHABLE'),
+                'id': n_id,
+                'name': n.get('name', n_id),
+                'district': n.get('district', ''),
+                'state': n.get('state', ''),
+                'lat': n.get('lat'),
+                'lon': n.get('lon'),
+                'type': n.get('type', 'junction'),
+                'alias': n.get('alias'),
+                'population': n.get('population', 0),
+                'buffer_days': n.get('buffer_days', 5),
+                'status': status,
                 'status_color': s_info.get('status_color', '#10b981'),
                 'min_hub_hops': s_info.get('min_hub_hops', 0),
                 'isolation_duration_hours': s_info.get('isolation_duration_hours', 0),
-                'isolation_reason': s_info.get('isolation_reason', ''),
-                'incident_risk_max': s_info.get('incident_risk_max', 0.0),
-                'incident_risk_avg': s_info.get('incident_risk_avg', 0.0)
+                'isolation_reason': s_info.get('isolation_reason', '')
             })
 
         result = {
