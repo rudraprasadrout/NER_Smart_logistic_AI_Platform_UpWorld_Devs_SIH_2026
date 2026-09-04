@@ -5,24 +5,31 @@
 {% block content %}
 <style>
   /* ---------------------------------------------------------------
-     Field Command Console — local tokens (built on top of base vars)
+     Field Command Console — Dual-Theme Tactical Design
      --------------------------------------------------------------- */
   .ec-page {
     --ec-mono: ui-monospace, "SF Mono", "Cascadia Code", Consolas, monospace;
-    --ec-line: color-mix(in srgb, var(--border-primary) 70%, transparent);
-    --ec-danger: var(--status-danger, #e5484d);
-    --ec-warn: var(--status-warn, #f5a623);
-    --ec-ok: var(--accent);
+    --ec-line: color-mix(in srgb, var(--border-primary) 80%, transparent);
+    --ec-danger: var(--status-danger, #ef4444);
+    --ec-warn: var(--status-warn, #f59e0b);
+    --ec-ok: var(--status-safe, #10b981);
     display: flex;
     flex-direction: column;
-    gap: 14px;
+    gap: 12px;
+    height: calc(100vh - 52px - 28px);
+    max-width: 1600px;
+    width: 100%;
+    margin: 0 auto;
+    padding: 12px 18px;
+    box-sizing: border-box;
+    overflow: hidden;
   }
 
-  /* Contour-line texture, nodding to the hill terrain these roads cross */
+  /* Contour-line texture */
   .ec-contours {
     position: absolute;
     inset: 0;
-    opacity: 0.05;
+    opacity: 0.04;
     pointer-events: none;
     background-image:
       repeating-radial-gradient(circle at 15% 20%, transparent 0 18px, var(--ec-line) 18px 19px, transparent 19px 40px),
@@ -36,16 +43,17 @@
     display: flex;
     align-items: center;
     justify-content: space-between;
-    gap: 16px;
-    padding: 12px 18px;
+    gap: 14px;
+    padding: 10px 16px;
     border: 1px solid var(--ec-line);
-    border-left: 3px solid var(--ec-danger);
+    border-left: 4px solid var(--ec-danger);
     border-radius: 10px;
     background: var(--bg-secondary);
+    flex-shrink: 0;
   }
   .ec-statusbar-left { display: flex; align-items: center; gap: 12px; min-width: 0; }
   .ec-pulse {
-    width: 9px; height: 9px; border-radius: 50%;
+    width: 10px; height: 10px; border-radius: 50%;
     background: var(--ec-danger);
     box-shadow: 0 0 0 0 color-mix(in srgb, var(--ec-danger) 60%, transparent);
     animation: ec-pulse 2s ease-out infinite;
@@ -59,67 +67,111 @@
   .ec-status-text { display: flex; flex-direction: column; gap: 2px; min-width: 0; }
   .ec-status-kicker {
     font-family: var(--ec-mono);
-    font-size: 10px;
-    font-weight: 700;
-    letter-spacing: 1.4px;
+    font-size: 10.5px;
+    font-weight: 800;
+    letter-spacing: 1.2px;
     color: var(--ec-danger);
     text-transform: uppercase;
   }
   .ec-status-desc {
-    font-size: 12px;
+    font-size: 11.5px;
     color: var(--text-secondary);
     white-space: nowrap;
     overflow: hidden;
     text-overflow: ellipsis;
   }
+  .ec-statusbar-actions {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    flex-shrink: 0;
+  }
+  .ec-refresh-btn {
+    display: flex;
+    align-items: center;
+    gap: 5px;
+    background: var(--bg-tertiary);
+    border: 1px solid var(--border-secondary);
+    color: var(--text-secondary);
+    font-size: 11.5px;
+    font-weight: 700;
+    padding: 7px 12px;
+    border-radius: 8px;
+    cursor: pointer;
+    transition: all 0.15s ease;
+  }
+  .ec-refresh-btn:hover {
+    color: var(--text-heading);
+    border-color: var(--accent);
+  }
   .ec-dispatch-btn {
     display: flex;
     align-items: center;
     gap: 7px;
-    flex-shrink: 0;
-    font-size: 12px;
-    font-weight: 700;
-    padding: 9px 16px;
+    font-size: 11.5px;
+    font-weight: 800;
+    padding: 7px 14px;
     border-radius: 8px;
     background: var(--ec-danger);
     color: #fff;
     text-decoration: none;
     letter-spacing: 0.2px;
+    box-shadow: 0 2px 8px rgba(239, 68, 68, 0.3);
   }
-  .ec-dispatch-btn:hover { filter: brightness(1.08); }
+  .ec-dispatch-btn:hover { filter: brightness(1.1); }
 
-  /* ---- Grid ---- */
+  /* ---- Main Grid ---- */
   .ec-grid {
     display: grid;
-    grid-template-columns: 380px 1fr;
+    grid-template-columns: 410px 1fr;
     gap: 14px;
-    min-height: 0;
     flex: 1;
+    min-height: 0;
+    height: 100%;
+    overflow: hidden;
   }
-  @media (max-width: 900px) {
-    .ec-grid { grid-template-columns: 1fr; }
+  @media (max-width: 1024px) {
+    .ec-grid { grid-template-columns: 350px 1fr; }
   }
-  .ec-sidebar { display: flex; flex-direction: column; gap: 14px; min-height: 0; }
+  @media (max-width: 860px) {
+    .ec-page { height: auto; overflow: visible; }
+    .ec-grid { grid-template-columns: 1fr; height: auto; overflow: visible; }
+    .ec-map-panel { height: 440px; min-height: 440px; }
+  }
+
+  /* ---- Sidebar ---- */
+  .ec-sidebar {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+    height: 100%;
+    min-height: 0;
+    overflow: hidden;
+  }
 
   /* ---- Advisory panel ---- */
-  .ec-panel {
+  .ec-advisory-panel {
     border: 1px solid var(--ec-line);
     border-radius: 10px;
     background: var(--bg-secondary);
     overflow: hidden;
+    flex-shrink: 0;
+    display: flex;
+    flex-direction: column;
   }
   .ec-panel-head {
     display: flex;
     align-items: center;
     justify-content: space-between;
     gap: 10px;
-    padding: 11px 14px;
+    padding: 9px 14px;
     border-bottom: 1px solid var(--ec-line);
+    background: var(--bg-card);
   }
   .ec-panel-title {
     display: flex;
     align-items: center;
-    gap: 8px;
+    gap: 7px;
     font-family: var(--ec-mono);
     font-size: 11px;
     font-weight: 700;
@@ -131,82 +183,134 @@
     display: flex;
     gap: 2px;
     background: var(--bg-tertiary);
-    border-radius: 7px;
+    border-radius: 6px;
     padding: 2px;
   }
   .ec-tab {
     border: none;
     background: transparent;
     font-family: var(--ec-mono);
-    font-size: 10.5px;
+    font-size: 10px;
     font-weight: 700;
-    padding: 4px 9px;
-    border-radius: 5px;
+    padding: 3px 8px;
+    border-radius: 4px;
     color: var(--text-tertiary);
     cursor: pointer;
+    transition: all 0.12s ease;
   }
-  .ec-tab.active { background: var(--bg-card); color: var(--text-heading); }
+  .ec-tab.active { background: var(--accent); color: #fff; }
 
   .ec-advisory-body {
-    padding: 13px 14px;
-    max-height: 260px;
+    padding: 10px 14px;
+    max-height: 180px;
     overflow-y: auto;
-    transition: opacity 0.15s ease;
+    font-size: 11.5px;
+    line-height: 1.45;
   }
   .ec-adv-heading {
     font-family: var(--ec-mono);
     font-weight: 800;
-    font-size: 11px;
+    font-size: 10.5px;
     color: var(--ec-ok);
     text-transform: uppercase;
     letter-spacing: 0.5px;
-    margin: 10px 0 5px;
+    margin: 8px 0 4px;
   }
   .ec-adv-heading:first-child { margin-top: 0; }
   .ec-adv-step {
     display: flex;
-    gap: 9px;
+    gap: 8px;
     align-items: flex-start;
-    margin: 9px 0 4px;
+    margin: 6px 0 3px;
   }
   .ec-adv-step-num {
     font-family: var(--ec-mono);
     background: var(--ec-ok);
     color: #fff;
     font-weight: 800;
-    font-size: 10px;
-    padding: 1px 6px;
+    font-size: 9.5px;
+    padding: 1px 5px;
     border-radius: 4px;
     flex-shrink: 0;
     margin-top: 1px;
   }
-  .ec-adv-step-body { font-size: 12px; font-weight: 600; color: var(--text-heading); line-height: 1.4; }
+  .ec-adv-step-body { font-size: 11.5px; font-weight: 600; color: var(--text-heading); line-height: 1.35; }
   .ec-adv-bullet {
-    margin-left: 21px;
-    font-size: 11.5px;
+    margin-left: 18px;
+    font-size: 11px;
     color: var(--text-secondary);
-    line-height: 1.5;
-    margin-bottom: 3px;
+    line-height: 1.4;
+    margin-bottom: 2px;
   }
-  .ec-adv-text { font-size: 11.5px; color: var(--text-secondary); line-height: 1.5; margin-bottom: 4px; }
+  .ec-adv-text { font-size: 11px; color: var(--text-secondary); line-height: 1.4; margin-bottom: 3px; }
 
   /* ---- Severed settlements panel ---- */
+  .ec-settlements-panel {
+    border: 1px solid var(--ec-line);
+    border-radius: 10px;
+    background: var(--bg-secondary);
+    overflow: hidden;
+    flex: 1;
+    min-height: 0;
+    display: flex;
+    flex-direction: column;
+  }
   .ec-severed-count {
     font-family: var(--ec-mono);
     font-weight: 800;
-    font-size: 11px;
+    font-size: 10.5px;
     color: var(--ec-danger);
     background: color-mix(in srgb, var(--ec-danger) 14%, transparent);
     padding: 1px 7px;
     border-radius: 5px;
   }
+  .ec-filter-box {
+    padding: 8px 12px;
+    border-bottom: 1px solid var(--ec-line);
+    background: var(--bg-tertiary);
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+  }
+  .ec-search-input {
+    width: 100%;
+    background: var(--bg-input);
+    border: 1px solid var(--border-primary);
+    border-radius: var(--radius-sm);
+    color: var(--text-primary);
+    padding: 5px 8px;
+    font-size: 11.5px;
+    font-family: inherit;
+    outline: none;
+    box-sizing: border-box;
+  }
+  .ec-search-input:focus { border-color: var(--border-focus); }
+  .ec-filter-chips {
+    display: flex;
+    gap: 4px;
+  }
+  .ec-chip {
+    padding: 2px 8px;
+    border-radius: 100px;
+    font-size: 10.5px;
+    font-weight: 700;
+    background: var(--surface-overlay);
+    border: 1px solid var(--border-primary);
+    color: var(--text-secondary);
+    cursor: pointer;
+    transition: all 0.12s ease;
+  }
+  .ec-chip:hover { color: var(--text-heading); }
+  .ec-chip.active { background: var(--accent); color: #fff; border-color: var(--accent); }
+
   .ec-severed-list {
     display: flex;
     flex-direction: column;
     gap: 8px;
     padding: 10px;
     overflow-y: auto;
-    max-height: 480px;
+    flex: 1;
+    min-height: 0;
   }
   .ec-empty-note {
     text-align: center;
@@ -221,12 +325,16 @@
     border: 1px solid var(--ec-line);
     border-left: 3px solid var(--ec-warn);
     border-radius: 8px;
-    padding: 10px 12px;
+    padding: 9px 11px;
     background: var(--bg-tertiary);
     cursor: pointer;
-    transition: border-color 0.12s ease, transform 0.12s ease;
+    transition: border-color 0.12s ease, transform 0.12s ease, background 0.12s ease;
   }
-  .ec-scard:hover { transform: translateX(1px); }
+  .ec-scard:hover {
+    transform: translateX(2px);
+    border-color: var(--border-active);
+    background: var(--bg-card-hover);
+  }
   .ec-scard.ec-isolated { border-left-color: var(--ec-danger); }
 
   .ec-scard-top {
@@ -234,15 +342,15 @@
     justify-content: space-between;
     align-items: center;
     gap: 8px;
-    margin-bottom: 3px;
+    margin-bottom: 2px;
   }
-  .ec-scard-name { font-size: 13px; font-weight: 800; color: var(--text-heading); }
+  .ec-scard-name { font-size: 12.5px; font-weight: 800; color: var(--text-heading); }
   .ec-pill {
     font-family: var(--ec-mono);
     font-size: 9px;
     font-weight: 800;
     letter-spacing: 0.4px;
-    padding: 2px 6px;
+    padding: 1.5px 6px;
     border-radius: 4px;
     flex-shrink: 0;
   }
@@ -253,29 +361,28 @@
     font-family: var(--ec-mono);
     font-size: 10px;
     color: var(--text-tertiary);
-    margin-bottom: 8px;
+    margin-bottom: 6px;
     letter-spacing: 0.2px;
   }
 
-  .ec-scard-stats { display: flex; justify-content: space-between; align-items: center; margin-bottom: 7px; gap: 10px; }
+  .ec-scard-stats { display: flex; justify-content: space-between; align-items: center; margin-bottom: 6px; gap: 8px; }
   .ec-scard-pop { font-size: 11px; color: var(--text-secondary); }
   .ec-scard-pop b { color: var(--text-heading); }
 
-  /* Buffer-days urgency bar: the supply clock, visualized */
-  .ec-buffer { display: flex; flex-direction: column; align-items: flex-end; gap: 3px; min-width: 70px; }
-  .ec-buffer-label { font-family: var(--ec-mono); font-size: 9.5px; color: var(--text-tertiary); }
-  .ec-buffer-track { width: 70px; height: 5px; border-radius: 3px; background: var(--bg-card); overflow: hidden; }
-  .ec-buffer-fill { height: 100%; border-radius: 3px; }
+  .ec-buffer { display: flex; flex-direction: column; align-items: flex-end; gap: 2px; min-width: 65px; }
+  .ec-buffer-label { font-family: var(--ec-mono); font-size: 9px; color: var(--text-tertiary); }
+  .ec-buffer-track { width: 65px; height: 4px; border-radius: 2px; background: var(--bg-card); overflow: hidden; }
+  .ec-buffer-fill { height: 100%; border-radius: 2px; }
 
   .ec-scard-reason {
     font-size: 10.5px;
     color: var(--text-secondary);
     background: var(--bg-card);
-    padding: 6px 8px;
-    border-radius: 6px;
+    padding: 5px 7px;
+    border-radius: 5px;
     border-left: 2px solid var(--ec-line);
-    margin-bottom: 8px;
-    line-height: 1.4;
+    margin-bottom: 6px;
+    line-height: 1.35;
   }
 
   .ec-scard-actions { display: flex; justify-content: flex-end; }
@@ -283,14 +390,16 @@
     display: flex;
     align-items: center;
     gap: 4px;
-    font-size: 10.5px;
+    font-size: 10px;
     font-weight: 800;
-    padding: 4px 10px;
-    border-radius: 6px;
+    padding: 3px 8px;
+    border-radius: 5px;
     background: var(--ec-ok);
     color: #fff;
     text-decoration: none;
+    transition: filter 0.12s ease;
   }
+  .ec-relief-btn:hover { filter: brightness(1.1); }
 
   /* ---- Map panel ---- */
   .ec-map-panel {
@@ -299,7 +408,10 @@
     border-radius: 10px;
     overflow: hidden;
     background: var(--bg-secondary);
-    min-height: 420px;
+    height: 100%;
+    min-height: 0;
+    display: flex;
+    flex-direction: column;
   }
   .ec-map-tag {
     position: absolute;
@@ -308,17 +420,25 @@
     z-index: 500;
     font-family: var(--ec-mono);
     font-size: 10px;
-    font-weight: 700;
+    font-weight: 800;
     letter-spacing: 0.6px;
     text-transform: uppercase;
     color: var(--text-heading);
-    background: color-mix(in srgb, var(--bg-secondary) 88%, transparent);
+    background: color-mix(in srgb, var(--bg-secondary) 90%, transparent);
     border: 1px solid var(--ec-line);
-    padding: 5px 10px;
+    padding: 4px 9px;
     border-radius: 6px;
-    backdrop-filter: blur(3px);
+    backdrop-filter: blur(4px);
+    display: flex;
+    align-items: center;
+    gap: 6px;
   }
-  #map-container { height: 100%; width: 100%; }
+  #map-container {
+    flex: 1;
+    width: 100%;
+    height: 100%;
+    min-height: 0;
+  }
 </style>
 
 <div class="ec-page">
@@ -329,14 +449,20 @@
     <div class="ec-statusbar-left">
       <div class="ec-pulse"></div>
       <div class="ec-status-text">
-        <span class="ec-status-kicker">Operations Status — Live</span>
-        <span class="ec-status-desc">Monitoring severed arterial passes &amp; critical food/medicine relief priorities</span>
+        <span class="ec-status-kicker">Emergency Command Center — Live Protocol</span>
+        <span class="ec-status-desc">Monitoring severed lifeline corridors, stranded hamlets &amp; critical medical relief priorities</span>
       </div>
     </div>
-    <a href="{{ url_for('route_planner') }}" class="ec-dispatch-btn">
-      <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="6" cy="19" r="3"/><path d="M9 19h8.5a3.5 3.5 0 0 0 0-7h-11a3.5 3.5 0 0 1 0-7H15"/><circle cx="18" cy="5" r="3"/></svg>
-      <span>Open Route Dispatcher</span>
-    </a>
+    <div class="ec-statusbar-actions">
+      <button class="ec-refresh-btn" id="btn-refresh-emergency" title="Refresh Live Network Telemetry">
+        <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M21.5 2v6h-6M21.34 15.57a10 10 0 1 1-.57-8.38l5.67-5.67"/></svg>
+        <span>Refresh ↻</span>
+      </button>
+      <a href="{{ url_for('route_planner') }}" class="ec-dispatch-btn">
+        <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="6" cy="19" r="3"/><path d="M9 19h8.5a3.5 3.5 0 0 0 0-7h-11a3.5 3.5 0 0 1 0-7H15"/><circle cx="18" cy="5" r="3"/></svg>
+        <span>Open Route Dispatcher</span>
+      </a>
+    </div>
   </div>
 
   <div class="ec-grid">
@@ -344,10 +470,11 @@
     <!-- Left: advisory + severed settlements -->
     <div class="ec-sidebar">
 
-      <div class="ec-panel">
+      <!-- AI Tactical Advisory Panel -->
+      <div class="ec-advisory-panel">
         <div class="ec-panel-head">
           <div class="ec-panel-title">
-            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2v20M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg>
+            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/></svg>
             <span>Logistics Advisory</span>
           </div>
           <div class="ec-tabs">
@@ -362,14 +489,27 @@
         </div>
       </div>
 
-      <div class="ec-panel" style="display:flex;flex-direction:column;min-height:0;flex:1">
+      <!-- Severed Settlements Panel -->
+      <div class="ec-settlements-panel">
         <div class="ec-panel-head">
           <div class="ec-panel-title" style="color:var(--ec-danger)">
             <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="m21.73 18-8-14a2 2 0 0 0-3.48 0l-8 14A2 2 0 0 0 4 21h16a2 2 0 0 0 1.73-3Z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>
-            <span>Severed Settlements</span>
+            <span>Severed Hamlets</span>
             <span class="ec-severed-count" id="disaster-iso-count">0</span>
           </div>
         </div>
+
+        <!-- Search & Filter Controls -->
+        <div class="ec-filter-box">
+          <input type="text" id="emergency-search" class="ec-search-input" placeholder="Search severed hamlet or district...">
+          <div class="ec-filter-chips">
+            <button class="ec-chip active" id="chip-all" data-filter="ALL">All</button>
+            <button class="ec-chip" id="chip-iso" data-filter="ISOLATED">Isolated</button>
+            <button class="ec-chip" id="chip-risk" data-filter="AT_RISK">At Risk</button>
+          </div>
+        </div>
+
+        <!-- Settlements List -->
         <div class="ec-severed-list" id="disaster-settlements-list">
           <div class="ec-empty-note">Scanning arterial corridors...</div>
         </div>
@@ -377,9 +517,12 @@
 
     </div>
 
-    <!-- Right: map -->
+    <!-- Right: Map -->
     <div class="ec-map-panel">
-      <span class="ec-map-tag">Accessibility Graph</span>
+      <span class="ec-map-tag">
+        <span style="width:7px;height:7px;border-radius:50%;background:var(--ec-danger);animation:ec-pulse 2s infinite"></span>
+        Tactical Accessibility Graph
+      </span>
       <div id="map-container"></div>
     </div>
 
@@ -390,9 +533,56 @@
 
 {% block extra_js %}
 <script>
+let allSeveredSettlements = [];
+let currentFilter = 'ALL';
+let currentSearch = '';
+
 document.addEventListener('DOMContentLoaded', async () => {
+  // Initialize clean Leaflet map instance
   window.mapEngine.init([25.45, 92.15], 9);
 
+  // Initial load
+  await loadEmergencyData();
+
+  // Search input
+  const searchInput = document.getElementById('emergency-search');
+  if (searchInput) {
+    searchInput.addEventListener('input', (e) => {
+      currentSearch = e.target.value.toLowerCase().trim();
+      renderSettlementsList();
+    });
+  }
+
+  // Filter chips
+  document.querySelectorAll('.ec-chip').forEach(btn => {
+    btn.addEventListener('click', () => {
+      document.querySelectorAll('.ec-chip').forEach(b => b.classList.remove('active'));
+      btn.classList.add('active');
+      currentFilter = btn.dataset.filter || 'ALL';
+      renderSettlementsList();
+    });
+  });
+
+  // Manual refresh button
+  document.getElementById('btn-refresh-emergency')?.addEventListener('click', () => {
+    loadEmergencyData();
+    loadAiAdvisory(document.querySelector('.ai-lang-btn.active')?.dataset.lang || 'en', true);
+  });
+
+  // Multilingual advisory buttons
+  document.querySelectorAll('.ai-lang-btn').forEach(btn => {
+    btn.addEventListener('click', () => {
+      document.querySelectorAll('.ai-lang-btn').forEach(b => b.classList.remove('active'));
+      btn.classList.add('active');
+      loadAiAdvisory(btn.dataset.lang);
+    });
+  });
+
+  // Initial AI Advisory load
+  loadAiAdvisory('en');
+});
+
+async function loadEmergencyData() {
   try {
     const [graphRes, isoRes] = await Promise.all([
       fetch('/api/v1/graph/accessibility'),
@@ -402,82 +592,143 @@ document.addEventListener('DOMContentLoaded', async () => {
     const isoData = await isoRes.json();
 
     if (graphData.status === 'success') {
-      window.mapEngine.renderAccessibilityGraph(graphData);
+      // Pass edge click handler to inspect corridor on map click
+      window.mapEngine.renderAccessibilityGraph(graphData, onCorridorClick);
     }
 
     if (isoData.status === 'success') {
-      const list = document.getElementById('disaster-settlements-list');
+      // 1. UPDATE MAP NODE STATUSES (Highlights severed settlements in red on map)
+      window.mapEngine.updateNodeStatuses(isoData.settlements);
+
+      // 2. Filter severed & at-risk settlements
+      allSeveredSettlements = isoData.settlements.filter(s => !s.is_hub && (s.status === 'ISOLATED' || s.status === 'AT_RISK'));
+      
       const countEl = document.getElementById('disaster-iso-count');
-      const items = isoData.settlements.filter(s => !s.is_hub && (s.status === 'ISOLATED' || s.status === 'AT_RISK'));
-      if (countEl) countEl.textContent = items.length;
+      if (countEl) countEl.textContent = allSeveredSettlements.length;
 
-      if (items.length === 0) {
-        list.innerHTML = '<div class="ec-empty-note">No severed settlements detected.</div>';
-      } else {
-        const displayItems = items.slice(0, 60);
-        list.innerHTML = displayItems.map(s => {
-          const isIsolated = s.status === 'ISOLATED';
-          const cardCls = isIsolated ? 'ec-isolated' : '';
-          const pillCls = isIsolated ? 'ec-danger' : 'ec-warn';
-          const bufferColor = s.buffer_days <= 2 ? 'var(--ec-danger)' : (s.buffer_days <= 5 ? 'var(--ec-warn)' : 'var(--ec-ok)');
-          const bufferPct = Math.max(6, Math.min(100, (s.buffer_days / 10) * 100));
-          return `
-            <div class="ec-scard ${cardCls}" data-lat="${s.lat}" data-lon="${s.lon}">
-              <div class="ec-scard-top">
-                <span class="ec-scard-name">${s.name}</span>
-                <span class="ec-pill ${pillCls}">${s.status}</span>
-              </div>
-              <div class="ec-scard-loc">${s.district}, ${s.state}</div>
-              <div class="ec-scard-stats">
-                <div class="ec-scard-pop">Pop. <b>${s.population.toLocaleString()}</b></div>
-                <div class="ec-buffer">
-                  <span class="ec-buffer-label">${s.buffer_days}d supply buffer</span>
-                  <div class="ec-buffer-track"><div class="ec-buffer-fill" style="width:${bufferPct}%;background:${bufferColor}"></div></div>
-                </div>
-              </div>
-              <div class="ec-scard-reason">${s.isolation_reason}</div>
-              <div class="ec-scard-actions">
-                <a href="/routes?to=${s.id || s.node_id}" class="ec-relief-btn">
-                  <span>Dispatch Relief</span>
-                  <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14"/><path d="m12 5 7 7-7 7"/></svg>
-                </a>
-              </div>
-            </div>`;
-        }).join('');
-      }
-
-      list.querySelectorAll('.ec-scard').forEach(card => {
-        card.addEventListener('click', e => {
-          if (e.target.closest('a')) return;
-          window.mapEngine?.zoomToNode(+card.dataset.lat, +card.dataset.lon);
-        });
-      });
+      renderSettlementsList();
     }
 
-    // Load AI Tactical Advisory
-    loadAiAdvisory('en');
+    // Invalidate map size so tiles render cleanly without grey borders
+    setTimeout(() => {
+      if (window.mapEngine?.map) {
+        window.mapEngine.map.invalidateSize();
+      }
+    }, 150);
 
-    document.querySelectorAll('.ai-lang-btn').forEach(btn => {
-      btn.addEventListener('click', () => {
-        document.querySelectorAll('.ai-lang-btn').forEach(b => b.classList.remove('active'));
-        btn.classList.add('active');
-        loadAiAdvisory(btn.dataset.lang);
-      });
+  } catch (err) {
+    console.error('Emergency console data load error:', err);
+    const list = document.getElementById('disaster-settlements-list');
+    if (list) list.innerHTML = `<div class="ec-empty-note" style="color:var(--status-danger)">Error loading emergency telemetry: ${err.message}</div>`;
+  }
+}
+
+function renderSettlementsList() {
+  const list = document.getElementById('disaster-settlements-list');
+  if (!list) return;
+
+  let items = allSeveredSettlements;
+
+  // Filter status
+  if (currentFilter === 'ISOLATED') {
+    items = items.filter(s => s.status === 'ISOLATED');
+  } else if (currentFilter === 'AT_RISK') {
+    items = items.filter(s => s.status === 'AT_RISK');
+  }
+
+  // Search query
+  if (currentSearch) {
+    items = items.filter(s => 
+      s.name.toLowerCase().includes(currentSearch) || 
+      (s.district && s.district.toLowerCase().includes(currentSearch)) ||
+      (s.isolation_reason && s.isolation_reason.toLowerCase().includes(currentSearch))
+    );
+  }
+
+  if (items.length === 0) {
+    list.innerHTML = '<div class="ec-empty-note">No matching severed settlements found.</div>';
+    return;
+  }
+
+  const displayItems = items.slice(0, 60);
+  list.innerHTML = displayItems.map(s => {
+    const isIsolated = s.status === 'ISOLATED';
+    const cardCls = isIsolated ? 'ec-isolated' : '';
+    const pillCls = isIsolated ? 'ec-danger' : 'ec-warn';
+    const bufferColor = s.buffer_days <= 2 ? 'var(--ec-danger)' : (s.buffer_days <= 5 ? 'var(--ec-warn)' : 'var(--ec-ok)');
+    const bufferPct = Math.max(8, Math.min(100, (s.buffer_days / 10) * 100));
+
+    return `
+      <div class="ec-scard ${cardCls}" data-lat="${s.lat}" data-lon="${s.lon}" data-name="${escapeHtml(s.name)}" data-info="${escapeHtml(s.district + ' · ' + s.status + ' (' + s.buffer_days + 'd buffer)')}">
+        <div class="ec-scard-top">
+          <span class="ec-scard-name">${escapeHtml(s.name)}</span>
+          <span class="ec-pill ${pillCls}">${s.status}</span>
+        </div>
+        <div class="ec-scard-loc">${escapeHtml(s.district)}, ${escapeHtml(s.state)}</div>
+        <div class="ec-scard-stats">
+          <div class="ec-scard-pop">Pop: <b>${s.population.toLocaleString()}</b></div>
+          <div class="ec-buffer">
+            <span class="ec-buffer-label">${s.buffer_days}d supply buffer</span>
+            <div class="ec-buffer-track"><div class="ec-buffer-fill" style="width:${bufferPct}%;background:${bufferColor}"></div></div>
+          </div>
+        </div>
+        <div class="ec-scard-reason">${escapeHtml(s.isolation_reason)}</div>
+        <div class="ec-scard-actions">
+          <a href="/routes?to=${encodeURIComponent(s.node_id || s.id || '')}" class="ec-relief-btn" title="Calculate safe detour to ${escapeHtml(s.name)}">
+            <span>Dispatch Relief</span>
+            <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14"/><path d="m12 5 7 7-7 7"/></svg>
+          </a>
+        </div>
+      </div>`;
+  }).join('');
+
+  // Attach click to zoom to node
+  list.querySelectorAll('.ec-scard').forEach(card => {
+    card.addEventListener('click', e => {
+      if (e.target.closest('a')) return;
+      const lat = +card.dataset.lat;
+      const lon = +card.dataset.lon;
+      const name = card.dataset.name;
+      const info = card.dataset.info;
+      window.mapEngine?.zoomToNode(lat, lon, name, info);
     });
+  });
+}
 
-  } catch (err) { console.error('Disaster view error:', err); }
-});
+function onCorridorClick(edge) {
+  if (!edge || !edge.geometry || !edge.geometry.length || !window.mapEngine?.map) return;
+  const midPoint = edge.geometry[Math.floor(edge.geometry.length / 2)];
+  const isBlocked = edge.risk_score >= 70;
+  const color = isBlocked ? '#ef4444' : edge.risk_score >= 50 ? '#f59e0b' : '#10b981';
 
-async function loadAiAdvisory(lang = 'en') {
+  L.popup()
+    .setLatLng(midPoint)
+    .setContent(`
+      <div style="font-family:var(--font-sans);min-width:200px">
+        <div style="font-weight:800;font-size:13px;color:#fff">${escapeHtml(edge.name)}</div>
+        <div style="font-size:10.5px;color:#94a3b8;margin-top:2px">${edge.road_type} &middot; ${edge.distance_km} km</div>
+        <div style="margin-top:6px;font-size:12px;font-weight:800;color:${color}">
+          Hazard Risk: ${edge.risk_score}% &middot; ${isBlocked ? 'SEVERED CHOKEPOINT' : 'PASSABLE'}
+        </div>
+        <div style="font-size:10.5px;color:#cbd5e1;margin-top:4px">
+          Slope: ${edge.slope_deg}&deg; &middot; Rain: ${edge.rainfall_mm || 0}mm &middot; Saturation: ${Math.round((edge.soil_saturation || 0.5) * 100)}%
+        </div>
+      </div>
+    `)
+    .openOn(window.mapEngine.map);
+}
+
+async function loadAiAdvisory(lang = 'en', forceRefresh = false) {
   const box = document.getElementById('ai-advisory-content');
   if (!box) return;
 
-  // Check browser session cache first to save API credits & avoid repeated network requests
   const cacheKey = 'pathner_ai_advisory_' + lang;
-  const cached = sessionStorage.getItem(cacheKey);
-  if (cached) {
-    box.innerHTML = renderMarkdownAdvisory(cached);
-    return;
+  if (!forceRefresh) {
+    const cached = sessionStorage.getItem(cacheKey);
+    if (cached) {
+      box.innerHTML = renderMarkdownAdvisory(cached);
+      return;
+    }
   }
 
   box.style.opacity = '0.5';
@@ -487,9 +738,11 @@ async function loadAiAdvisory(lang = 'en') {
     if (data.status === 'success') {
       sessionStorage.setItem(cacheKey, data.advisory);
       box.innerHTML = renderMarkdownAdvisory(data.advisory);
+    } else {
+      box.innerHTML = '<div class="ec-adv-text">Advisory unavailable. Local protocol active.</div>';
     }
   } catch (e) {
-    box.innerHTML = '<div class="ec-adv-text">Tactical advisory offline.</div>';
+    box.innerHTML = '<div class="ec-adv-text">Tactical advisory offline. Local fallback operating.</div>';
   } finally {
     box.style.opacity = '1';
   }
@@ -498,7 +751,6 @@ async function loadAiAdvisory(lang = 'en') {
 function renderMarkdownAdvisory(raw) {
   if (!raw) return '';
 
-  // Clean raw markdown syntax into elegant HTML using the console's own classes
   let lines = raw.split('\n');
   let html = '';
 
@@ -506,18 +758,16 @@ function renderMarkdownAdvisory(raw) {
     line = line.trim();
     if (!line || line.startsWith('---')) continue;
 
-    // Header styling
     if (line.startsWith('###') || line.startsWith('##') || line.startsWith('#')) {
       const text = line.replace(/^[#\s]+/, '').replace(/\*\*/g, '');
-      html += `<div class="ec-adv-heading">${text}</div>`;
+      html += `<div class="ec-adv-heading">${escapeHtml(text)}</div>`;
       continue;
     }
 
-    // Numbered Action Items (e.g. 1. REOPEN PRIMARY CORRIDORS)
     const matchNum = line.match(/^(\d+)\.\s+(.*)/);
     if (matchNum) {
       const num = matchNum[1];
-      let body = matchNum[2].replace(/\*\*(.*?)\*\*/g, '<b>$1</b>');
+      let body = escapeHtml(matchNum[2]).replace(/\*\*(.*?)\*\*/g, '<b>$1</b>');
       html += `
         <div class="ec-adv-step">
           <span class="ec-adv-step-num">${num}</span>
@@ -526,19 +776,24 @@ function renderMarkdownAdvisory(raw) {
       continue;
     }
 
-    // Bullet Items (e.g. - Action: Deploy BRO...)
     if (line.startsWith('-') || line.startsWith('*')) {
-      let body = line.replace(/^[-*]\s+/, '').replace(/\*\*(.*?)\*\*/g, '<b>$1</b>');
+      let body = escapeHtml(line.replace(/^[-*]\s+/, '')).replace(/\*\*(.*?)\*\*/g, '<b>$1</b>');
       html += `<div class="ec-adv-bullet">• ${body}</div>`;
       continue;
     }
 
-    // General text
-    let clean = line.replace(/\*\*(.*?)\*\*/g, '<b>$1</b>');
+    let clean = escapeHtml(line).replace(/\*\*(.*?)\*\*/g, '<b>$1</b>');
     html += `<div class="ec-adv-text">${clean}</div>`;
   }
 
   return html;
+}
+
+function escapeHtml(str) {
+  if (!str) return '';
+  const div = document.createElement('div');
+  div.textContent = str;
+  return div.innerHTML;
 }
 </script>
 {% endblock %}
