@@ -436,7 +436,7 @@ pytest tests/test_app.py -v
     </td>
     <td align="center">
       <a href="https://github.com/satyajitmohapatra">
-        <img src="https://github.com/satyajitmohapatra.png" width="100px;" alt="Satyajit Mohapatra"/><br/>
+        <img src="https://github.com/satyazitmohapatra.png" width="100px;" alt="Satyajit Mohapatra"/><br/>
         <sub><b>Satyajit Mohapatra</b></sub>
       </a><br/>
       <sub>🤖 ML / AI Engineer</sub><br/>
