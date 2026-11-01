@@ -431,7 +431,7 @@ pytest tests/test_app.py -v
         <img src="https://github.com/rudraprasadrout.png" width="100px;" alt="Rudra Prasad Rout"/><br/>
         <sub><b>Rudra Prasad Rout</b></sub>
       </a><br/>
-      <sub>🎯 Team Lead & Full Stack Developer</sub><br/>
+      <sub>🎯 Team Lead & Backend Developer</sub><br/>
       <a href="https://github.com/rudraprasadrout">@rudraprasadrout</a>
     </td>
     <td align="center">
